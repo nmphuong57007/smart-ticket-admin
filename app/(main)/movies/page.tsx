@@ -1,16 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import MovieContainer from "@/modules/movie/movie-container";
 export default function MoviesPage() {
-  return (
-    <div className="container mx-auto p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Quản lý Phim</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>Nội dung quản lý phim sẽ được phát triển ở đây</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <MovieContainer />;
 }
