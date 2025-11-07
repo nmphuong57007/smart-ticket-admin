@@ -63,6 +63,7 @@ export type MovieType = {
     updated_at: string;
 }
 
+
 export const createColumns = (
   router: ReturnType<typeof useRouter>
 ): ColumnDef<MovieType>[] => [
@@ -139,12 +140,36 @@ export const createColumns = (
   {
     accessorKey: "language",
     header: "Ngôn Ngữ",
-    cell: ({ row }) => (<div className="capitalize ">{row.getValue("language")}</div>),
+    cell: ({ row }) => {
+      // Lấy giá trị language từ row
+      const value = row.getValue<string>("language");
+
+      // Map giá trị sang label tiếng Việt
+      const languageMap: Record<string, string> = {
+        sub: "Phụ đề",
+        narrated: "Thuyết minh",
+        dub: "Lồng tiếng",
+      };
+
+      return <div className="capitalize">{languageMap[value] ?? value}</div>;
+    },
   },
   {
     accessorKey: "status",
     header: "Trạng Thái",
-    cell: ({ row }) => (<div className="capitalize">{row.getValue("status")}</div>),
+    cell: ({ row }) => {
+       // Lấy giá trị language từ row
+      const value = row.getValue<string>("status");
+
+      // Map giá trị sang label tiếng Việt
+      const languageMap: Record<string, string> = {
+        showing: "Đang chiếu",
+        coming: "Sắp chiếu",
+        stopped: "Ngừng chiếu",
+      };
+
+      return <div className="capitalize">{languageMap[value] ?? value}</div>;
+    },
   },
   {
     id: "Hành Động",
