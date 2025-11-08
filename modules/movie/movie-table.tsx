@@ -91,6 +91,7 @@ export const createColumns = (
           alt="poster"
           fill
           className="object-cover rounded-md"
+          priority
         />
       </div>
     );
