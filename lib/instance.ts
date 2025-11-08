@@ -12,6 +12,8 @@ const AUTH_TOKEN = getAuthToken();
 const instance = axios.create();
 
 instance.defaults.baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+console.log("✅ API Base URL:", instance.defaults.baseURL);
+
 instance.defaults.headers.common["Authorization"] = AUTH_TOKEN;
 instance.defaults.headers.post["Content-Type"] =
   "application/x-www-form-urlencoded";
