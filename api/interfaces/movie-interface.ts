@@ -49,16 +49,16 @@ export interface MovieDetailResInterface {
   };
 }
 
-export interface MovieReqInterface {
-    title: string;
-    poster: File;
-    trailer: string;
-    description: string;
-    genre: string;
-    duration: number;
-    format: string;
-    language: string;
-    release_date: string;
-    end_date: string;
-    status: string;
+export interface MovieCreateReqInterface {
+  title: string;
+  poster: File;
+  trailer: string;
+  description: string;
+  genre: string;
+  duration: number;
+  format: string;
+  language: string;
+  release_date: string;
+  end_date: string;
+  status: string;
 }

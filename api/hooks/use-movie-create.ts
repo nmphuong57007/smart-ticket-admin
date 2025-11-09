@@ -1,11 +1,11 @@
 import { useMutation, mutationOptions } from "@tanstack/react-query";
 
 import { createMovie } from "../services/movie-api";
-import { MovieReqInterface } from "../interfaces/movie-interface";
+import { MovieCreateReqInterface } from "../interfaces/movie-interface";
 
 export const useCreateMovie = () => {
   return useMutation({
-    mutationFn: (data: MovieReqInterface) => {
+    mutationFn: (data: MovieCreateReqInterface) => {
       return createMovie(data);
     },
     ...mutationOptions,

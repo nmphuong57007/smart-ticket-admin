@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,8 +36,13 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { redirectConfig } from "@/helpers/redirect-config";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-interface CinemaTableProps {
+interface MovieTableProps {
   data: CinemaType[];
   setPage: React.Dispatch<React.SetStateAction<number>>;
   lastPage: number;
@@ -45,11 +51,19 @@ interface CinemaTableProps {
 
 export type CinemaType = {
   id: number;
-  name: string;
-  address: string;
-  phone: string;
+  title: string;
+  poster: string;
+  trailer: string;
+  description: string;
+  genre: string;
+  duration: number;
+  format: string;
+  language: string;
+  release_date: string;
+  end_date: null;
+  status: string;
   created_at: string;
-  rooms_count: number;
+  updated_at: string;
 };
 
 const createColumns = (
@@ -62,42 +76,85 @@ const createColumns = (
   },
 
   {
-    accessorKey: "name",
-    header: "Tên Rạp",
-    cell: ({ row }) => <div className="capitalize">{row.getValue("name")}</div>,
-  },
-
-  {
-    accessorKey: "address",
-    header: "Địa Chỉ Rạp",
+    accessorKey: "title",
+    header: "Tên Phim",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("address")}</div>
+      <div className="capitalize">{row.getValue("title")}</div>
     ),
   },
 
   {
-    accessorKey: "phone",
-    header: "Số Điện Thoại",
+    accessorKey: "poster",
+    header: "Ảnh Poster",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("phone")}</div>
-    ),
-  },
-
-  {
-    accessorKey: "rooms_count",
-    header: "Số Phòng Chiếu",
-    cell: ({ row }) => (
-      <div className="capitalize text-center">
-        {row.getValue("rooms_count")}
+      <div className="capitalize">
+        <Image
+          src="https://placehold.co/600x400"
+          alt={`Poster of ${row.getValue("title")}`}
+          width={100}
+          height={100}
+          className="object-cover"
+        />
       </div>
     ),
   },
 
   {
-    accessorKey: "created_at",
-    header: "Ngày Tạo",
+    accessorKey: "trailer",
+    header: "Trailer",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("created_at")}</div>
+      <div className="capitalize">
+        <a
+          href={row.getValue("trailer")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600"
+        >
+          {row.getValue("trailer")}
+        </a>
+      </div>
+    ),
+  },
+
+  {
+    accessorKey: "description",
+    header: "Mô Tả",
+    cell: ({ row }) => (
+      <Tooltip>
+        <TooltipTrigger>
+          <div className="capitalize text-center line-clamp-1 w-48">
+            {row.getValue("description")}
+          </div>
+        </TooltipTrigger>
+      
+        <TooltipContent>
+          <p>{row.getValue("description")}</p>
+        </TooltipContent>
+      </Tooltip>
+    ),
+  },
+
+  {
+    accessorKey: "genre",
+    header: "Thể Loại",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("genre")}</div>
+    ),
+  },
+
+  {
+    accessorKey: "duration",
+    header: "Thời Lượng (phút)",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("duration")}</div>
+    ),
+  },
+
+  {
+    accessorKey: "release_date",
+    header: "Ngày Phát Hành",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("release_date")}</div>
     ),
   },
 
@@ -134,7 +191,7 @@ const createColumns = (
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                router.push(redirectConfig.cinemaDetail(cinema.id));
+                router.push(redirectConfig.movieDetail(cinema.id));
               }}
             >
               Chi tiết
@@ -154,12 +211,12 @@ const createColumns = (
   },
 ];
 
-export function CinemaTable({
+export function MovieTable({
   data,
   setPage,
   lastPage,
   currentPage,
-}: CinemaTableProps) {
+}: MovieTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(

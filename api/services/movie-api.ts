@@ -3,19 +3,20 @@ import instance from "@/lib/instance";
 import {
   MovieResInterface,
   MovieDetailResInterface,
-  MovieReqInterface,
+  MovieCreateReqInterface,
 } from "../interfaces/movie-interface";
 
 export const getMovies = async (
   per_page?: number,
-  page?: number
+  page?: number,
+  sort_order?: string
 ): Promise<MovieResInterface> => {
   try {
     const res = await instance.get<MovieResInterface>(`/api/movies/list`, {
       params: {
         per_page,
         page,
-        sort_order: "asc",
+        sort_order: sort_order ?? "asc",
       },
     });
     return res.data;
@@ -37,7 +38,7 @@ export const getMovieDetail = async (
   }
 };
 
-export const createMovie = async (data: MovieReqInterface) => {
+export const createMovie = async (data: MovieCreateReqInterface) => {
   try {
     const res = await instance.post<MovieDetailResInterface>(
       `/api/movies`,
