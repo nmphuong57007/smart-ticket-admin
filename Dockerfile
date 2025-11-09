@@ -1,6 +1,16 @@
 # Stage 1: Build
 FROM ubuntu:24.04 AS builder
 
+# Accept build-time variables so platforms that provide envs during build
+# (like Render when configured) can inject NEXT_PUBLIC_* and PORT into
+# the image and into Next.js at build time.
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG NEXT_PUBLIC_CRYPTO_SECRET
+ARG PORT=3000
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_CRYPTO_SECRET=$NEXT_PUBLIC_CRYPTO_SECRET
+ENV PORT=$PORT
+
 # Cài đặt dependencies
 RUN apt-get update && apt-get install -y \
     curl \
@@ -32,6 +42,16 @@ RUN npm run build
 
 # Stage 2: Runtime
 FROM ubuntu:24.04
+
+# Make runtime environment variables available. Render will pass runtime
+# envs to the container; we also accept ARGs so the same render.yaml can be
+# used to inject values during build if desired.
+ARG PORT=3000
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG NEXT_PUBLIC_CRYPTO_SECRET
+ENV PORT=$PORT
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_CRYPTO_SECRET=$NEXT_PUBLIC_CRYPTO_SECRET
 
 # Cài đặt dependencies runtime
 RUN apt-get update && apt-get install -y \
