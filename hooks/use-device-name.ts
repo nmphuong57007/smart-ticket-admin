@@ -1,5 +1,10 @@
 export const useDeviceName = () => {
   const getDeviceName = () => {
+    // Check if we're in browser environment
+    if (typeof window === "undefined" || typeof navigator === "undefined") {
+      return "server";
+    }
+
     const userAgent = navigator.userAgent;
 
     if (userAgent.includes("Windows")) return "windows";

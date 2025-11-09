@@ -1,5 +1,6 @@
 import axios from "axios";
 import { toast } from "sonner";
+
 import { getToken } from "@/helpers/has-token";
 
 const getAuthToken = () => {
@@ -17,9 +18,9 @@ instance.defaults.headers.post["Content-Type"] =
   "application/x-www-form-urlencoded";
 
 // check server health on startup
-instance.get("/api/health-check", {
-  timeout: 5000,
-});
+// instance.get("/api/health-check", {
+//   timeout: 5000,
+// });
 
 // Request interceptor
 instance.interceptors.request.use(

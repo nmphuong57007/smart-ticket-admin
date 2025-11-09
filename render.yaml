@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: smart-ticket-admin
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # - key: NEXT_PUBLIC_API_URL
+      #   value: https://api.example.com
+      # - key: API_SECRET
+      #   sync: false
+    healthCheckPath: /api/health
+    healthCheckInterval: 30
+    headers:
+      - name: X-Robots-Tag
+        value: noindex
