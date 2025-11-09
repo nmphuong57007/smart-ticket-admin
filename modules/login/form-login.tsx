@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import { useDeviceName } from "@/hooks/use-device-name";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,8 @@ const formSchema = z.object({
 });
 
 export default function FormLogin() {
+  const router = useRouter();
+
   const { getDeviceName } = useDeviceName();
 
   const { mutate: login, isPending: isLoggingIn } = useLogin();
@@ -46,8 +49,7 @@ export default function FormLogin() {
       onSuccess: (data) => {
         toast.success("Đăng nhập thành công!");
         setToken(data.data.token);
-        // Sử dụng window.location.href để reload lại trang và trigger logic protected layout
-        window.location.href = redirectConfig.home;
+        router.push(redirectConfig.dashboard);
       },
 
       onError: () => {
