@@ -12,8 +12,10 @@ const AUTH_TOKEN = getAuthToken();
 
 const instance = axios.create();
 
-instance.defaults.baseURL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+// Prefer build-time public env but allow runtime override via window.__ENV
+// (populated by the container at startup). This lets us change API URL at
+// container start without rebuilding the client bundle.
+instance.defaults.baseURL = "";
 instance.defaults.headers.common["Authorization"] = AUTH_TOKEN;
 instance.defaults.headers.post["Content-Type"] =
   "application/x-www-form-urlencoded";
@@ -26,6 +28,27 @@ instance.defaults.headers.post["Content-Type"] =
 // Request interceptor
 instance.interceptors.request.use(
   (config) => {
+    // Resolve baseURL priority:
+    // 1) runtime script: window.__ENV.NEXT_PUBLIC_API_BASE_URL (populated by container)
+    // 2) build-time env: process.env.NEXT_PUBLIC_API_BASE_URL
+    // 3) fallback to localhost (dev)
+    try {
+      if (!config.baseURL) {
+        const runtimeApi =
+          typeof window !== "undefined"
+            ? (window as unknown as { __ENV?: { NEXT_PUBLIC_API_BASE_URL?: string } }).__ENV
+                ?.NEXT_PUBLIC_API_BASE_URL
+            : undefined;
+
+        config.baseURL =
+          runtimeApi || process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "http://localhost:8080";
+      }
+    } catch (err) {
+      // ignore and let fallbacks apply
+      console.warn("Error resolving runtime API baseURL", err);
+    }
+
     // Cập nhật token cho mỗi request để đảm bảo token luôn mới nhất
     const currentToken = getAuthToken();
     if (currentToken) {

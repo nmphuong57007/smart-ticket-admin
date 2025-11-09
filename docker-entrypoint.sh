@@ -123,5 +123,17 @@ echo ""
 echo -e "${BOLD}${GREEN}✅ Starting Next.js services...${NC}"
 echo ""
 
+# Generate runtime env config for client-side consumption
+# This file will be served from /env-config.js and populated from
+# environment variables available at container start. This allows changing
+# client-facing NEXT_PUBLIC_* values without rebuilding the image.
+cat > /app/public/env-config.js <<- 'EOF'
+window.__ENV = {
+  NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL}",
+  NEXT_PUBLIC_CRYPTO_SECRET: "${NEXT_PUBLIC_CRYPTO_SECRET}",
+  PORT: "${PORT}"
+};
+EOF
+
 # Start supervisor
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
