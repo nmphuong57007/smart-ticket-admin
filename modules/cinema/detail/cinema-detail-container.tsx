@@ -1,53 +1,51 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-import { CinemaDetailPageProps } from "@/app/(main)/cinemas/[id]/detail/page";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
 import { redirectConfig } from "@/helpers/redirect-config";
 import CinemaDetail from "./cinema-detail";
+import { useCinemaDetail } from "@/api/hooks/use-cinema-detail";
+import CardWrapperTable from "@/components/card-wrapper-table";
+import { Fragment } from "react";
+import Link from "next/link";
 
-interface CinemaDetailContainerProps extends CinemaDetailPageProps {}
+interface CinemaDetailContainerProps {
+  id: string;
+}
 
 export default function CinemaDetailContainer({
-  params,
+  id,
 }: CinemaDetailContainerProps) {
-  const router = useRouter();
+  const {
+    data: cinemaDetail,
+    isError,
+    isLoading,
+  } = useCinemaDetail(Number(id));
 
-  const handleBack = () => {
-    router.push(redirectConfig.cinemas);
-  };
+  if (isError) toast.error("Đã có lỗi xảy ra khi tải chi tiết rạp chiếu phim.");
 
   return (
-    <div className="mx-auto p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                style={{ padding: 0 }}
-              >
-                <ArrowLeft />
-                Chi Tiết Rạp Chiếu Phim
-              </Button>
-
-              <div className="flex items-center gap-3">
-                <Button>Thêm Rạp Chiếu Phim</Button>
-                <Button variant="secondary">Thống kê rạp</Button>
-              </div>
-            </div>
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          {params.id}
-          <CinemaDetail />
-        </CardContent>
-      </Card>
-    </div>
+    <CardWrapperTable
+      title={
+        <Button asChild variant="ghost" style={{ padding: 0 }}>
+          <Link href={redirectConfig.cinemas}>
+            <ArrowLeft />
+            Danh Sách Rạp Chiếu Phim
+          </Link>
+        </Button>
+      }
+      actions={
+        <Fragment>
+          <Button>Thêm Rạp Chiếu Phim</Button>
+          <Button variant="secondary">Thống kê rạp</Button>
+        </Fragment>
+      }
+    >
+      {cinemaDetail && (
+        <CinemaDetail cinemaDetail={cinemaDetail.data} isLoading={isLoading} />
+      )}
+    </CardWrapperTable>
   );
 }

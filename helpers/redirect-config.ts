@@ -4,6 +4,8 @@ export const redirectConfig = {
   dashboard: "/dashboard",
   cinemas: "/cinemas",
   cinemaDetail: (id: string | number) => `/cinemas/${id}/detail`,
+  cinemaRooms: (id: string | number) => `/cinemas/${id}/rooms`,
+  cinemaStatic: "/cinemas/static",
   movies: "/movies",
   rooms: "/rooms",
   seats: "/seats",

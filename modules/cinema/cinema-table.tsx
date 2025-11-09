@@ -141,7 +141,13 @@ const createColumns = (
             >
               Chi tiết
             </DropdownMenuItem>
-            <DropdownMenuItem>Danh sách phòng</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                router.push(redirectConfig.cinemaRooms(cinema.id));
+              }}
+            >
+              Danh sách phòng
+            </DropdownMenuItem>
             <DropdownMenuItem>Lịch chiếu</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

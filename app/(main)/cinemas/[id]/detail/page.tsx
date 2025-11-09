@@ -7,5 +7,5 @@ export interface CinemaDetailPageProps {
 }
 
 export default function CinemaDetailPage({ params }: CinemaDetailPageProps) {
-  return <CinemaDetailContainer params={params} />;
+  return <CinemaDetailContainer id={params.id} />;
 }

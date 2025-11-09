@@ -1,5 +1,10 @@
 import instance from "@/lib/instance";
-import { CinemaResInterface } from "../interfaces/cinema-interface";
+import {
+  CinemaResInterface,
+  CinemaDetailResInterface,
+  CinemaStaticReqInterface,
+  CinemaRoomReqInterface,
+} from "../interfaces/cinema-interface";
 
 export const getCinemas = async (
   per_page?: number,
@@ -12,6 +17,43 @@ export const getCinemas = async (
         page,
       },
     });
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getCinemaDetail = async (
+  cinema_id: number
+): Promise<CinemaDetailResInterface> => {
+  try {
+    const res = await instance.get<CinemaDetailResInterface>(
+      `/api/cinemas/${cinema_id}`
+    );
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getCinemaStatic = async (): Promise<CinemaStaticReqInterface> => {
+  try {
+    const res = await instance.get<CinemaStaticReqInterface>(
+      `/api/cinemas/statistics`
+    );
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const getCinemaRooms = async (
+  cinema_id: number
+): Promise<CinemaRoomReqInterface> => {
+  try {
+    const res = await instance.get<CinemaRoomReqInterface>(
+      `/api/cinemas/${cinema_id}/rooms`
+    );
     return res.data;
   } catch (err) {
     throw err;
