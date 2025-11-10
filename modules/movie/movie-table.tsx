@@ -89,7 +89,7 @@ const createColumns = (
     cell: ({ row }) => (
       <div className="capitalize">
         <Image
-          src="https://placehold.co/600x400"
+          src={row.getValue("poster")}
           alt={`Poster of ${row.getValue("title")}`}
           width={100}
           height={100}
@@ -110,7 +110,7 @@ const createColumns = (
           rel="noopener noreferrer"
           className="text-blue-600"
         >
-          {row.getValue("trailer")}
+          Xem tại đây
         </a>
       </div>
     ),
@@ -146,7 +146,7 @@ const createColumns = (
     accessorKey: "duration",
     header: "Thời Lượng (phút)",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("duration")}</div>
+      <div className="capitalize text-center">{row.getValue("duration")}</div>
     ),
   },
 
@@ -196,14 +196,6 @@ const createColumns = (
             >
               Chi tiết
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                router.push(redirectConfig.cinemaRooms(cinema.id));
-              }}
-            >
-              Danh sách phòng
-            </DropdownMenuItem>
-            <DropdownMenuItem>Lịch chiếu</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
