@@ -37,7 +37,6 @@ export interface MovieDetailResInterface {
     poster: string;
     trailer: string;
     description: string;
-    genre: string;
     duration: number;
     format: string;
     language: string;
@@ -46,19 +45,30 @@ export interface MovieDetailResInterface {
     status: string;
     created_at: string;
     updated_at: string;
+    genres: {
+        id: number;
+        name: string;
+    }[];
   };
 }
 
 export interface MovieCreateReqInterface {
-  title: string;
-  poster: File;
-  trailer: string;
-  description: string;
-  genre: string;
-  duration: number;
-  format: string;
-  language: string;
-  release_date: string;
-  end_date: string;
-  status: string;
+   id: number;
+    title: string;
+    poster: string;
+    trailer: string;
+    description: string;
+    duration: string;
+    format: string;
+    language: string;
+    release_date: string;
+    end_date: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+    genres: {
+        id: number;
+        name: string;
+    }[];
 }
+

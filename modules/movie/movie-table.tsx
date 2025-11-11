@@ -135,14 +135,6 @@ const createColumns = (
   },
 
   {
-    accessorKey: "genre",
-    header: "Thể Loại",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("genre")}</div>
-    ),
-  },
-
-  {
     accessorKey: "duration",
     header: "Thời Lượng (phút)",
     cell: ({ row }) => (

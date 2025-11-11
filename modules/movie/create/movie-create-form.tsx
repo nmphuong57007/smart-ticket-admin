@@ -1,3 +1,4 @@
+"use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -19,13 +20,34 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+
+interface RengeProps {
+  rengeData: RengeType[];
+}
+
+export type RengeType = {
+   id: number;
+    name: string;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+};
 
 const formSchema = z.object({
   title: z.string().min(1, "Tiêu đề là bắt buộc"),
   poster: z.any().refine((file) => file instanceof File, "Poster là bắt buộc"),
   trailer: z.string().min(1, "Trailer là bắt buộc"),
   description: z.string().min(1, "Mô tả là bắt buộc"),
-  genre: z.string().min(1, "Thể loại là bắt buộc"),
+  genre: z
+  .array(z.string().min(1, "Thể loại không được để trống"))
+  .nonempty("Thể loại là bắt buộc"),
   duration: z.number().min(1, "Thời lượng phải lớn hơn 0"),
   format: z.string().min(1, "Định dạng là bắt buộc"),
   language: z.string().min(1, "Ngôn ngữ là bắt buộc"),
@@ -34,9 +56,11 @@ const formSchema = z.object({
   status: z.string().min(1, "Trạng thái là bắt buộc"),
 });
 
-export default function MovieCreateForm() {
+export default function MovieCreateForm({
+  rengeData,
+}: RengeProps) {
   const router = useRouter();
-
+  
   const { mutate: createMovie, isPending: isCreating } = useCreateMovie();
 
   const form = useForm({
@@ -46,7 +70,7 @@ export default function MovieCreateForm() {
       poster: null,
       trailer: "",
       description: "",
-      genre: "",
+      genre: [],
       duration: 0,
       format: "",
       language: "",
@@ -63,7 +87,8 @@ export default function MovieCreateForm() {
     formData.append("poster", data.poster as unknown as Blob);
     formData.append("trailer", data.trailer);
     formData.append("description", data.description);
-    formData.append("genre", data.genre);
+    // Multi-select genre
+    data.genre.forEach((g) => formData.append("genre_ids[]", g));
     formData.append("duration", String(data.duration));
     formData.append("format", data.format);
     formData.append("language", data.language);
@@ -81,6 +106,8 @@ export default function MovieCreateForm() {
       },
     });
   };
+
+console.log(FormData);
 
   return (
     <Form {...form}>
@@ -161,12 +188,60 @@ export default function MovieCreateForm() {
             <FormItem>
               <FormLabel>Thể loại</FormLabel>
               <FormControl>
-                <Input placeholder="Thể loại" {...field} />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="justify-start w-full">
+                      {field.value.length > 0
+                        ? rengeData
+                            .filter((g) =>
+                              field.value.includes(String(g.id))
+                            )
+                            .map((g) => g.name)
+                            .join(", ")
+                        : "Chọn thể loại"}
+                    </Button>
+                  </PopoverTrigger>
+
+                  <PopoverContent className="w-64 p-2 max-h-56 overflow-y-auto">
+                    {rengeData.length === 0 ? (
+                      <p className="text-sm text-gray-500 p-2">Không có dữ liệu</p>
+                    ) : (
+                      rengeData.map((genre) => (
+                        <div
+                          key={genre.id}
+                          className="flex items-center gap-2 py-1 px-2 hover:bg-gray-50 rounded-md"
+                        >
+                          <Checkbox 
+                            id={`genre-${genre.id}`}
+                            checked={field.value.includes(String(genre.id))}
+                            onCheckedChange={(checked) => {
+                              const value = field.value || [];
+                              if (checked) {
+                                field.onChange([...value, String(genre.id)]);
+                              } else {
+                                field.onChange(
+                                  value.filter((v) => v !== String(genre.id))
+                                );
+                              }
+                            }}
+                          />
+                          <Label
+                            htmlFor={`genre-${genre.id}`}
+                            className="cursor-pointer text-sm"
+                          >
+                            {genre.name}
+                          </Label>
+                        </div>
+                      ))
+                    )}
+                  </PopoverContent>
+                </Popover>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
 
         {/* duration */}
         <FormField

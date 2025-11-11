@@ -7,8 +7,11 @@ import CardWrapperTable from "@/components/card-wrapper-table";
 import { Button } from "@/components/ui/button";
 import { redirectConfig } from "@/helpers/redirect-config";
 import MovieCreateForm from "./movie-create-form";
+import { useRenge } from "@/api/hooks/use-genre";
 
 export default function MovieCreateContainer() {
+  const {data: rengeData} = useRenge();
+  if (rengeData) console.log("rengeData:", rengeData);
   return (
     <CardWrapperTable
       title={
@@ -20,7 +23,11 @@ export default function MovieCreateContainer() {
         </Button>
       }
     >
-      <MovieCreateForm />
+      {rengeData && (
+      <MovieCreateForm rengeData={rengeData?.data??[]} />
+      )}
+      
+      
     </CardWrapperTable>
   );
 }

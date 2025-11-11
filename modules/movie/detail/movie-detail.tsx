@@ -11,7 +11,6 @@ interface MovieDataProps {
   poster: string;
   trailer: string;
   description: string;
-  genre: string;
   duration: number;
   format: string;
   language: string;
@@ -20,6 +19,10 @@ interface MovieDataProps {
   status: string;
   created_at: string;
   updated_at: string;
+  genres: {
+        id: number;
+        name: string;
+    }[];
 }
 
 interface MovieDetailProps {
@@ -36,15 +39,17 @@ export default function MovieDetail({ movie, isLoading }: MovieDetailProps) {
   if (!movie) {
     return <div>Không có dữ liệu phim.</div>;
   }
-
+console.log("Poster URL:", movie.poster);
   return (
     <div className="flex">
       <div className="w-1 flex-auto pl-50">
+        
         <Image
-                  src={movie.poster}
+                  src={movie.poster||'https://placehold.co/600x400'}
                   alt={movie.title}
                   width={100}
                   height={100}
+                  unoptimized
                   className="w-80 h-110 object-cover rounded-md"
                 />
       
@@ -61,7 +66,7 @@ export default function MovieDetail({ movie, isLoading }: MovieDetailProps) {
           <li>
             <div className="flex items-center gap-4 "> 
             <LucideHeart className="w-5 h-5 text-gray-700"  />  
-             Thể loại: {movie.genre}
+             Thể loại: {movie.genres.map((genre) => genre.name).join(", ")}
             </div>
           </li>
           <li>
