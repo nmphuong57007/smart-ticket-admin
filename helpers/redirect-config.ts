@@ -9,6 +9,7 @@ export const redirectConfig = {
   createMovie: "/movies/create",
   movies: "/movies",
   movieDetail: (id: string | number) => `/movies/${id}/detail`,
+  movieStatic: "/movies/static",
   rooms: "/rooms",
   seats: "/seats",
   showtimes: "/showtimes",

@@ -29,7 +29,9 @@ export default function MovieContainer() {
           <Button asChild>
             <Link href={redirectConfig.createMovie}>Thêm mới phim</Link>
           </Button>
-          <Button variant="secondary">Thống kê phim</Button>
+          <Button variant="secondary">
+            <Link href={redirectConfig.movieStatic}>Thống kê phim</Link>
+          </Button>
         </Fragment>
       }
     >

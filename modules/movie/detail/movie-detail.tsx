@@ -44,13 +44,13 @@ console.log("Poster URL:", movie.poster);
     <div className="flex">
       <div className="w-1 flex-auto pl-50">
         
-        <Image
+        <Image 
                   src={movie.poster||'https://placehold.co/600x400'}
                   alt={movie.title}
                   width={100}
                   height={100}
-                  unoptimized
                   className="w-80 h-110 object-cover rounded-md"
+                 priority
                 />
       
       </div>

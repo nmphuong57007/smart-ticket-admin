@@ -72,3 +72,46 @@ export interface MovieCreateReqInterface {
     }[];
 }
 
+export interface MovieStaticReqInterface {
+   success: boolean;
+    message: string;
+    data: {
+        overview: {
+            total_movies: number;
+            showing_movies: number;
+            coming_movies: number;
+            stopped_movies: number;
+        };
+        percentages: {
+            showing: number;
+            coming: number;
+            stopped: number;
+        };
+        by_genre: {
+            [genreName: string]: number;
+        };
+        recent_movies: {
+            id: number;
+            title: string;
+            poster: string;
+            trailer: string;
+            description: string;
+            duration: number;
+            format: string;
+            language: string;
+            release_date: string;
+            end_date: string | null;
+            status: string;
+            created_at: string;
+            updated_at: string
+            ;
+            genres: {
+                id: number
+                name: string
+                ;
+            }[];
+        }[];
+    };
+}
+ 
+

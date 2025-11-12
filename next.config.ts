@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
         protocol: 'http',
         hostname: 'smart-ticket-services.onrender.com',
         port: '',
-        pathname: '/storage/**',
+        pathname: '/storage/posters/**',
       },
     ],
   },

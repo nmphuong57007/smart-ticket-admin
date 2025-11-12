@@ -4,6 +4,7 @@ import {
   MovieResInterface,
   MovieDetailResInterface,
   MovieCreateReqInterface,
+  MovieStaticReqInterface,
 } from "../interfaces/movie-interface";
 
 export const getMovies = async (
@@ -54,3 +55,14 @@ export const createMovie = async (data: MovieCreateReqInterface) => {
     throw err;
   }
 };
+
+export const getMovieStatic  = async (): Promise<MovieStaticReqInterface> => {
+  try {
+    const res = await instance.get<MovieStaticReqInterface>(
+      `/api/movies/statistics`
+    );
+    return res.data;
+  }catch (err) {
+    throw err;
+  }
+  };
