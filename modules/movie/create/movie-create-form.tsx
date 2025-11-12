@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Calendar } from "@/components/ui/calendar";
+import { ChevronDownIcon } from "lucide-react";
+import { useState } from "react";
 
 interface RengeProps {
   rengeData: RengeType[];
@@ -54,7 +57,16 @@ const formSchema = z.object({
   release_date: z.string().min(1, "Ngày phát hành là bắt buộc"),
   end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
   status: z.string().min(1, "Trạng thái là bắt buộc"),
+})
+.refine((data) => {
+  if (!data.release_date || !data.end_date) return true; // skip nếu chưa chọn
+  return new Date(data.end_date) >= new Date(data.release_date);
+}, {
+  message: "Ngày kết thúc phải sau hoặc bằng ngày phát hành",
+  path: ["end_date"], // lỗi hiển thị ở end_date
 });
+
+;
 
 export default function MovieCreateForm({
   rengeData,
@@ -79,6 +91,11 @@ export default function MovieCreateForm({
       status: "",
     },
   });
+
+  const [releaseDate, setReleaseDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [openRelease, setOpenRelease] = useState(false);
+  const [openEnd, setOpenEnd] = useState(false);
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     // build multipart/form-data because API expects a file upload
@@ -106,8 +123,6 @@ export default function MovieCreateForm({
       },
     });
   };
-
-console.log(FormData);
 
   return (
     <Form {...form}>
@@ -271,7 +286,18 @@ console.log(FormData);
             <FormItem>
               <FormLabel>Định dạng</FormLabel>
               <FormControl>
-                <Input placeholder="VD: 2D, 3D" {...field} />
+                
+                 <select
+                  className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 text-sm shadow-xs"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                >
+                  <option value="">Chọn định dạng</option>
+                  <option value="2D">2D</option>
+                  <option value="3D">3D</option>
+                  <option value="IMAX">IMAX</option>
+                  <option value="4DX">4DX</option>
+                </select>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -286,7 +312,17 @@ console.log(FormData);
             <FormItem>
               <FormLabel>Ngôn ngữ</FormLabel>
               <FormControl>
-                <Input placeholder="Ngôn ngữ" {...field} />
+              
+                 <select
+                  className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 text-sm shadow-xs"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                >
+                  <option value="">Chọn ngôn ngữ</option>
+                  <option value="sub">Phụ đề</option>
+                  <option value="narrated">Thuyết minh</option>
+                  <option value="dub">lồng tiếng</option>
+                </select>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -302,7 +338,32 @@ console.log(FormData);
               <FormItem>
                 <FormLabel>Ngày phát hành</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                     <div className="flex flex-col gap-3">
+                <Popover open={openRelease} onOpenChange={setOpenRelease}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      id="date"
+                      className="justify-between font-normal"
+                    >
+                      {releaseDate ? releaseDate.toLocaleDateString() : "Chọn ngày phát hành"}
+                      <ChevronDownIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={releaseDate}
+                      captionLayout="dropdown"
+                      onSelect={(date) => {
+                        setReleaseDate(date)
+                        setOpenRelease(false)
+                        field.onChange(date?.toISOString().split("T")[0]);
+                      }}
+                    />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -316,7 +377,33 @@ console.log(FormData);
               <FormItem>
                 <FormLabel>Ngày kết thúc</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <div className="flex flex-col gap-3">
+                <Popover open={openEnd} onOpenChange={setOpenEnd}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      id="date"
+                      className="justify-between font-normal"
+                    >
+                      {endDate ? endDate.toLocaleDateString() : "Chọn ngày kết thúc"}
+                      <ChevronDownIcon />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      captionLayout="dropdown"
+                      onSelect={(date) => {
+                        setEndDate(date)
+                        setOpenEnd(false)
+                        field.onChange(date?.toISOString().split("T")[0]);
+                      }}
+                    />
+                    
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -338,9 +425,9 @@ console.log(FormData);
                   onChange={(e) => field.onChange(e.target.value)}
                 >
                   <option value="">Chọn trạng thái</option>
-                  <option value="coming">coming</option>
-                  <option value="showing">showing</option>
-                  <option value="stopped">stopped</option>
+                  <option value="coming">Sắp chiếu</option>
+                  <option value="showing">Đang chiếu</option>
+                  <option value="stopped">Dừng chiếu</option>
                 </select>
               </FormControl>
               <FormMessage />

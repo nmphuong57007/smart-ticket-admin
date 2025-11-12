@@ -79,7 +79,7 @@ const createColumns = (
     accessorKey: "title",
     header: "Tên Phim",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("title")}</div>
+      <div className="capitalize line-clamp-1 w-48">{row.getValue("title")}</div>
     ),
   },
 
