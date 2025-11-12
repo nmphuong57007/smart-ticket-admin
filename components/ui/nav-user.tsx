@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, Settings, User } from "lucide-react";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -125,8 +125,7 @@ export function NavUser({ userProfile }: NavUserProps) {
               </div>
             </div>
 
-            <DropdownMenuGroup>
-            </DropdownMenuGroup>
+            <DropdownMenuGroup></DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
