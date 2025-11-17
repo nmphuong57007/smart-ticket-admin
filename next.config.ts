@@ -1,4 +1,3 @@
-
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -8,6 +7,7 @@ const nextConfig: NextConfig = {
     // remotePatterns: [new URL('https://picsum.photos/**')],
      remotePatterns: [
       new URL('http://127.0.0.1:8000/storage/posters/**'),
+
     ],
   },
 };

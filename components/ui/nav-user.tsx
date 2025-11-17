@@ -128,8 +128,7 @@ export function NavUser({ userProfile }: NavUserProps) {
               </div>
             </div>
 
-            <DropdownMenuGroup>
-            </DropdownMenuGroup>
+            <DropdownMenuGroup></DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => logout()} disabled={isPending}>
               <LogOut className="mr-2 w-4 h-4" />
