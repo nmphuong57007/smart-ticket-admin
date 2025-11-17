@@ -36,25 +36,39 @@ import {
 import { toast } from "sonner";
 import { redirectConfig } from "@/helpers/redirect-config";
 
-interface CinemaTableProps {
-  data: CinemaType[];
+interface RoomTableProps {
+  data: RoomType["items"];
   setPage: React.Dispatch<React.SetStateAction<number>>;
   lastPage: number;
   currentPage: number;
 }
 
-export type CinemaType = {
-  id: number;
-  name: string;
-  address: string;
-  phone: string;
-  created_at: string;
-  rooms_count: number;
+export type RoomType = {
+   items: {
+        id: number;
+        cinema_id: number;
+        cinema: {
+            id: number;
+            name: string;
+            address: string;
+        };
+        name: string;
+        seat_map: string[][];
+        total_seats: number;
+        status: {
+            code: string;
+            label: string;
+        };
+        created_at: string;
+        updated_at: string;
+    }[];
 };
+
+type RoomItem = RoomType["items"][number];
 
 const createColumns = (
   router: ReturnType<typeof useRouter>
-): ColumnDef<CinemaType>[] => [
+): ColumnDef<RoomItem>[] => [
   {
     accessorKey: "id",
     header: "ID",
@@ -62,51 +76,46 @@ const createColumns = (
   },
 
   {
-    accessorKey: "name",
+    accessorKey: "cinema.name",
     header: "Tên Rạp",
-    cell: ({ row }) => <div className="capitalize w-55">{row.getValue("name")}</div>,
-  },
-
-  {
-    accessorKey: "address",
-    header: "Địa Chỉ Rạp",
     cell: ({ row }) => (
-      <div className="capitalize w-90">{row.getValue("address")}</div>
+      <div className="capitalize  w-55">{row.original.cinema?.name}</div>
     ),
   },
-
   {
-    accessorKey: "phone",
-    header: "Số Điện Thoại",
+    accessorKey: "cinema.address",
+    header: "Địa chỉ rạp",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("phone")}</div>
+      <div className="capitalize  w-90">{row.original.cinema?.address}</div>
     ),
   },
-
   {
-    accessorKey: "rooms_count",
-    header: "Số Phòng Chiếu",
+    accessorKey: "name",
+    header: "Tên phòng",
     cell: ({ row }) => (
-      <div className="capitalize text-center">
-        {row.getValue("rooms_count")}
-      </div>
+    <div className="capitalize">{row.getValue("name")}</div>
     ),
   },
-
   {
-    accessorKey: "created_at",
-    header: "Ngày Tạo",
+    accessorKey: "total_seats",
+    header: "Tổng số ghế",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("created_at")}</div>
+      <div className="capitalize text-center">{row.getValue("total_seats")}</div>
     ),
   },
-
+  {
+    accessorKey: "status.label",
+    header: "Trạng thái",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.original.status?.label}</div>
+    ),
+  },
   {
     id: "actions",
     enableHiding: false,
     header: "Hành động",
     cell: ({ row }) => {
-      const cinema = row.original;
+      const room = row.original;
 
       return (
         <DropdownMenu>
@@ -122,9 +131,9 @@ const createColumns = (
 
             <DropdownMenuItem
               onClick={() => {
-                navigator.clipboard.writeText(cinema.id.toString());
+                navigator.clipboard.writeText(room.id.toString());
                 toast.success(
-                  `Đã sao chép ID ${cinema.id} rạp chiếu phim vào clipboard`
+                  `Đã sao chép ID ${room.id} rạp chiếu phim vào clipboard`
                 );
               }}
             >
@@ -134,19 +143,11 @@ const createColumns = (
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                router.push(redirectConfig.cinemaDetail(cinema.id));
+                router.push(redirectConfig.movieDetail(room.id));
               }}
             >
               Chi tiết
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                router.push(redirectConfig.cinemaRooms(cinema.id));
-              }}
-            >
-              Danh sách phòng
-            </DropdownMenuItem>
-            <DropdownMenuItem>Lịch chiếu</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -154,12 +155,12 @@ const createColumns = (
   },
 ];
 
-export function CinemaTable({
+export function RoomTable({
   data,
   setPage,
   lastPage,
   currentPage,
-}: CinemaTableProps) {
+}: RoomTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(

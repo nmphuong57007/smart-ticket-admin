@@ -1,11 +1,20 @@
+"use client";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { useState } from "react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+
 
 interface MovieStaticData {
     overview: {
@@ -54,6 +63,7 @@ interface ChartsProps {
 
 
 export default function Charts({ movieStaticData, isLoading }: ChartsProps) {
+  const [selectedGenre, setSelectedGenre] = useState("all");
   if (isLoading) {
     return (
       <div>
@@ -66,10 +76,17 @@ export default function Charts({ movieStaticData, isLoading }: ChartsProps) {
     return <div>Không có dữ liệu thống kê rạp phim.</div>;
   }
 
+  const genres = Object.keys(movieStaticData.by_genre ?? {});
+
+ // Lọc dữ liệu
+const filteredGenreData =
+  selectedGenre !== "all"
+    ? { [selectedGenre]: movieStaticData.by_genre[selectedGenre] }
+    : movieStaticData.by_genre;
   
   return (
     <div>
-        <h2 className="text-xl font-bold mb-4">Thống kê rạp chiếu phim</h2>
+        <h2 className="text-xl font-bold mb-4">Thống kê phim</h2>
         
         <div className="flex justify-between gap-4 flex-wrap ">
             <Card className="flex-1 min-w-[180px] flex flex-col justify-center rounded-xl border shadow-sm p-4 bg-card">
@@ -105,38 +122,51 @@ export default function Charts({ movieStaticData, isLoading }: ChartsProps) {
                 </CardContent>
             </Card>
         </div>
-         <div><br />
-        <p className="font-bold">Thống kê theo thể loại</p>
-        {movieStaticData.by_genre &&
-        Object.keys(movieStaticData.by_genre).length > 0 ? (
-          <div>
-            {(Object.entries(movieStaticData.by_genre) as [string, number][]).map(
+         {/* --- Thống kê theo thể loại + Select --- */}
+      <div className="mt-6">
+        <p className="font-bold mb-2">Thống kê theo thể loại</p>
+
+        {genres.length > 0 && (
+          <div className="w-64 mb-4">
+            <Select
+              value={selectedGenre}
+              onValueChange={(value) => setSelectedGenre(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Tất cả thể loại" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                {genres.map((g) => (
+                  <SelectItem key={g} value={g}>
+                    {g}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {filteredGenreData && Object.keys(filteredGenreData).length > 0 ? (
+          <div className="grid grid-cols-1 gap-3">
+            {(Object.entries(filteredGenreData) as [string, number][]).map(
               ([genre, count]) => (
-                <div key={genre}>
-                   <Card className=" min-w-[180px] flex-col rounded-xl border shadow-sm p-4 bg-card">
-                    <span>{genre}</span>
-                    <span className="font-bold">{count}</span>
-                  </Card> 
-                </div>
+                <Card
+                  key={genre}
+                  className="min-w-[180px] flex-col rounded-xl border shadow-sm p-4 bg-card"
+                >
+                  <span>{genre}</span>
+                  <span className="font-bold">{count}</span>
+                </Card>
               )
             )}
-        </div>
+          </div>
         ) : (
           <p className="text-sm text-gray-500">Không có dữ liệu thể loại</p>
         )}
       </div>
     </div>
-    // <div>
-    //   <h2 className="text-xl font-bold mb-4">Thống kê rạp chiếu phim</h2>
-    //   <div>
-    //   <p>Tổng quan phim:</p>
-    //   <p>Tổng số phim:  {movieStaticData.overview.total_movies}</p>
-    //   <p>Tổng số phim đang chiếu:  {movieStaticData.overview.showing_movies}</p>
-    //   <p>Tổng số phim sắp chiếu:  {movieStaticData.overview.coming_movies}</p>
-    //   <p>Tổng số phim dừng chiếu:  {movieStaticData.overview.stopped_movies}</p>
-    //   </div>
-     
-    //   {/* <p>Tổng số phòng chiếu: {movieStaticData.total_rooms}</p> */}
-    // </div>
+  
   );
 }

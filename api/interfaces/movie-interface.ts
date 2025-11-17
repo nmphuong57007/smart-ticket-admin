@@ -72,6 +72,31 @@ export interface MovieCreateReqInterface {
     }[];
 }
 
+export interface MovieUpdateResInterface {
+   success: boolean;
+    message: string;
+    data: {
+        id: number;
+        title: string;
+        poster: string;
+        trailer: string;
+        description: string;
+        duration: number;
+        format: string;
+        language: string;
+        release_date: string;
+        end_date: null;
+        status: string;
+        created_at: string;
+        updated_at: string;
+        genres: {
+            id: number;
+            name: string;
+        }[];
+    };
+}
+
+
 export interface MovieStaticReqInterface {
    success: boolean;
     message: string;
@@ -113,5 +138,12 @@ export interface MovieStaticReqInterface {
         }[];
     };
 }
+
+export interface MovieDeleteResInterface{
+   success: boolean;
+    message: string;
+}
+
+
  
 

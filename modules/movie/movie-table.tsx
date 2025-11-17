@@ -25,7 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -41,6 +40,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDeleteMovie } from "@/api/hooks/use-movie-delete";
+
 
 interface MovieTableProps {
   data: CinemaType[];
@@ -65,9 +66,10 @@ export type CinemaType = {
   created_at: string;
   updated_at: string;
 };
-
 const createColumns = (
-  router: ReturnType<typeof useRouter>
+  router: ReturnType<typeof useRouter>,
+  deleteMovie: (id: number) => void,
+  isPending: boolean
 ): ColumnDef<CinemaType>[] => [
   {
     accessorKey: "id",
@@ -87,12 +89,12 @@ const createColumns = (
     accessorKey: "poster",
     header: "Ảnh Poster",
     cell: ({ row }) => (
-      <div className="capitalize">
+      <div className="capitalize w-[80px] h-[120px] relative overflow-hidden">
         <Image
           src={row.getValue("poster")}
           alt={`Poster of ${row.getValue("title")}`}
-          width={100}
-          height={100}
+          
+          fill
           className="object-cover"
         />
       </div>
@@ -188,6 +190,17 @@ const createColumns = (
             >
               Chi tiết
             </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+              if (confirm("Bạn chắc chắn muốn xóa phim này?")) {
+                deleteMovie(cinema.id);
+              }
+              }}
+              disabled={isPending}
+              className="text-red-500 focus:text-red-600"
+            >
+              {isPending ? "Đang xóa..." : "Xóa"}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -202,6 +215,8 @@ export function MovieTable({
   currentPage,
 }: MovieTableProps) {
   const router = useRouter();
+  const { mutate: deleteMovie, isPending } = useDeleteMovie();
+
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -210,7 +225,9 @@ export function MovieTable({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const columns = React.useMemo(() => createColumns(router), [router]);
+  const columns = React.useMemo(() => createColumns(router,deleteMovie,isPending), [router,deleteMovie,isPending]);
+
+  
 
   const table = useReactTable({
     data,
@@ -243,10 +260,10 @@ export function MovieTable({
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
-        <Input
-          placeholder="Tìm kiếm tên rạp chiếu phim..."
+        {/* <Input
+          placeholder="Tìm kiếm tên phim..."
           className="max-w-sm"
-        />
+        /> */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

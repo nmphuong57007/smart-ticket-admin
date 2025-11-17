@@ -27,13 +27,15 @@ export default function MovieDetailContainer({
         <Button asChild variant="ghost" style={{ padding: 0 }}>
           <Link href={redirectConfig.movies}>
             <ArrowLeft />
-            Chi tiết Phim
+            Danh Sách Phim
           </Link>
         </Button>
       }
       actions={
         <Fragment>
-        <Button>Sửa Phim</Button>
+        <Button>
+          <Link href={redirectConfig.movieUpdate(id)}>Sửa phim</Link>
+        </Button>
         </Fragment>
       }
     >

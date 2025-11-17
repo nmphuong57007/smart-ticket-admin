@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, Settings, User } from "lucide-react";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -19,6 +19,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { ProfileResInterface } from "@/api/interfaces/profile-interface";
+import { useLogout } from "@/api/hooks/use-logout";
 
 interface NavUserProps {
   userProfile: ProfileResInterface;
@@ -41,6 +42,8 @@ export function NavUser({ userProfile }: NavUserProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
+
+  const { mutate: logout, isPending } = useLogout();
 
   return (
     <SidebarMenu>
@@ -128,10 +131,11 @@ export function NavUser({ userProfile }: NavUserProps) {
             <DropdownMenuGroup>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
-              <LogOut className="mr-2 h-4 w-4" />
-              Đăng xuất
+            <DropdownMenuItem onClick={() => logout()} disabled={isPending}>
+              <LogOut className="mr-2 w-4 h-4" />
+              {isPending ? "Đang đăng xuất..." : "Đăng xuất"}
             </DropdownMenuItem>
+
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

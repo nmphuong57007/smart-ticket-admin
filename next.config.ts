@@ -6,13 +6,8 @@ const nextConfig: NextConfig = {
     domains: ["placehold.co"],
     dangerouslyAllowSVG: true,
     // remotePatterns: [new URL('https://picsum.photos/**')],
-    remotePatterns: [
-      {
-        protocol: 'http',
-        hostname: 'smart-ticket-services.onrender.com',
-        port: '',
-        pathname: '/storage/posters/**',
-      },
+     remotePatterns: [
+      new URL('http://127.0.0.1:8000/storage/posters/**'),
     ],
   },
 };
