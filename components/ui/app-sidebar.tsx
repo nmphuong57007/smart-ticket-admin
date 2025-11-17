@@ -54,6 +54,11 @@ const data = {
       icon: Home,
     },
     {
+      title: "Người dùng",
+      url: redirectConfig.users,
+      icon: Users,
+    },
+    {
       title: "Quản lý Rạp",
       url: redirectConfig.cinemas,
       icon: Building2,
@@ -107,11 +112,6 @@ const data = {
       title: "Nội dung",
       url: redirectConfig.contents,
       icon: FileText,
-    },
-    {
-      title: "Người dùng",
-      url: redirectConfig.users,
-      icon: Users,
     },
     {
       title: "Cài đặt",
