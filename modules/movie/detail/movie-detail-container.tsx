@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { redirectConfig } from "@/helpers/redirect-config";
 import MovieDetail from "./movie-detail";
 import { toast } from "sonner";
+import { Fragment } from "react";
 
 interface MovieDetailContainerProps {
   id: string;
@@ -29,6 +30,13 @@ export default function MovieDetailContainer({
             Danh Sách Phim
           </Link>
         </Button>
+      }
+      actions={
+        <Fragment>
+        <Button>
+          <Link href={redirectConfig.movieUpdate(id)}>Sửa phim</Link>
+        </Button>
+        </Fragment>
       }
     >
       {movieDetail && (

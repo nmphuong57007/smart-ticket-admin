@@ -3,14 +3,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { redirectConfig } from "@/helpers/redirect-config";
-import { useCreateMovie } from "@/api/hooks/use-movie-create";
-import type { MovieCreateReqInterface } from "@/api/interfaces/movie-interface";
+
 import {
   Form,
   FormControl,
@@ -19,17 +18,23 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
 import { Textarea } from "@/components/ui/textarea";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDownIcon } from "lucide-react";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import { useUpdateMovie } from "@/api/hooks/use-movie-update";
+import instance from "@/lib/instance";
+
 
 interface RengeProps {
   rengeData: RengeType[];
@@ -45,7 +50,10 @@ export type RengeType = {
 
 const formSchema = z.object({
   title: z.string().min(1, "Tiêu đề là bắt buộc"),
-  poster: z.any().refine((file) => file instanceof File, "Poster là bắt buộc"),
+  poster: z
+  .any()
+  .optional()
+  .refine((file) => !file || file instanceof File, "Poster không hợp lệ"),
   trailer: z.string().min(1, "Trailer là bắt buộc"),
   description: z.string().min(1, "Mô tả là bắt buộc"),
   genre: z
@@ -68,12 +76,13 @@ const formSchema = z.object({
 
 ;
 
-export default function MovieCreateForm({
+export default function MovieUpdateForm({
   rengeData,
 }: RengeProps) {
   const router = useRouter();
+  const { id: movieId } = useParams();
   
-  const { mutate: createMovie, isPending: isCreating } = useCreateMovie();
+  const { mutate: updateMovie, isPending: isCreating } = useUpdateMovie();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -92,16 +101,60 @@ export default function MovieCreateForm({
     },
   });
 
+  // movie state removed (not used elsewhere)
   const [releaseDate, setReleaseDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [openRelease, setOpenRelease] = useState(false);
   const [openEnd, setOpenEnd] = useState(false);
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
+useEffect(() => {
+  if (!movieId) return;
+
+  const fetchMovie = async () => {
+    try {
+      // Use shared axios instance so baseURL and auth headers are applied
+      const res = await instance.get(`/api/movies/${movieId}`);
+      const m = res.data?.data;
+
+      // no longer storing movie in local state; we reset the form directly
+
+      // === RESET FORM VỚI DỮ LIỆU PHIM ===
+      form.reset({
+        title: m.title,
+        poster: null, // luôn null vì file không thể prefill
+        trailer: m.trailer,
+        description: m.description,
+        genre: m.genres.map((g: { id: number }) => String(g.id)),
+        duration: m.duration,
+        format: m.format,
+        language: m.language,
+        release_date: m.release_date,
+        end_date: m.end_date,
+        status: m.status,
+      });
+
+      // set lại state cho date picker
+      setPosterUrl(m.poster);
+      setReleaseDate(m.release_date ? new Date(m.release_date) : undefined);
+      setEndDate(m.end_date ? new Date(m.end_date) : undefined);
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Không tải được dữ liệu phim");
+    }
+  };
+
+  fetchMovie();
+}, [movieId, form]);
+
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     // build multipart/form-data because API expects a file upload
     const formData = new FormData();
     formData.append("title", data.title);
-    formData.append("poster", data.poster as unknown as Blob);
+    if (data.poster instanceof File) {
+    formData.append("poster", data.poster);
+    }
     formData.append("trailer", data.trailer);
     formData.append("description", data.description);
     // Multi-select genre
@@ -113,13 +166,18 @@ export default function MovieCreateForm({
     formData.append("end_date", data.end_date);
     formData.append("status", data.status);
 
-    createMovie(formData as unknown as MovieCreateReqInterface, {
+    updateMovie( 
+        {
+    id: Number(movieId),
+    data: formData,
+        },
+        {
       onSuccess: () => {
-        toast.success("Tạo phim thành công!");
+        toast.success("Sửa phim thành công!");
         router.push(redirectConfig.movies);
       },
       onError: () => {
-        toast.error("Tạo phim thất bại!");
+        toast.error("Sửa phim thất bại!");
       },
     });
   };
@@ -148,6 +206,12 @@ export default function MovieCreateForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Poster</FormLabel>
+               <a
+                href={posterUrl?? undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline mb-2 block"
+                ></a>
               <FormControl>
                 <Input
                   type="file"
@@ -436,7 +500,7 @@ export default function MovieCreateForm({
         />
 
         <Button type="submit" className="w-full" disabled={isCreating}>
-          Tạo phim
+          Lưu
           {isCreating && <Spinner />}
         </Button>
       </form>
