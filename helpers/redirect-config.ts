@@ -3,6 +3,7 @@ export const redirectConfig = {
   home: "/",
   login: "/login",
   dashboard: "/dashboard",
+  users: "/users",
   cinemas: "/cinemas",
   cinemaDetail: (id: string | number) => `/cinemas/${id}/detail`,
   cinemaRooms: (id: string | number) => `/cinemas/${id}/rooms`,
@@ -25,6 +26,5 @@ export const redirectConfig = {
   discounts: "/discounts",
   points: "/points",
   contents: "/contents",
-  users: "/users",
   settings: "/settings",
 };
