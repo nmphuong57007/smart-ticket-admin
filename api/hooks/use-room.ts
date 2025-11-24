@@ -10,7 +10,7 @@ export const useRooms = (
   search?:string
 ) => {
   return useQuery({
-    queryKey: ["getMovies", per_page, page, sort_order, sort_by, search],
+    queryKey: ["getRooms", per_page, page, sort_order, sort_by, search],
     queryFn: () => getRoom(per_page, page, sort_order,sort_by, search),
     enabled: hasToken(),
     ...queryOptions,

@@ -24,7 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -35,6 +34,10 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { redirectConfig } from "@/helpers/redirect-config";
+import Link from "next/link";
+import { useDeleteRoom } from "@/api/hooks/use-room-delete";
+import moment from "moment";
+
 
 interface RoomTableProps {
   data: RoomType["items"];
@@ -46,12 +49,6 @@ interface RoomTableProps {
 export type RoomType = {
    items: {
         id: number;
-        cinema_id: number;
-        cinema: {
-            id: number;
-            name: string;
-            address: string;
-        };
         name: string;
         seat_map: string[][];
         total_seats: number;
@@ -67,27 +64,14 @@ export type RoomType = {
 type RoomItem = RoomType["items"][number];
 
 const createColumns = (
-  router: ReturnType<typeof useRouter>
+  router: ReturnType<typeof useRouter>,
+  deleteRoom: (id: number) => void,
+  isPending: boolean
 ): ColumnDef<RoomItem>[] => [
   {
     accessorKey: "id",
     header: "ID",
     cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
-  },
-
-  {
-    accessorKey: "cinema.name",
-    header: "Tên Rạp",
-    cell: ({ row }) => (
-      <div className="capitalize  w-55">{row.original.cinema?.name}</div>
-    ),
-  },
-  {
-    accessorKey: "cinema.address",
-    header: "Địa chỉ rạp",
-    cell: ({ row }) => (
-      <div className="capitalize  w-90">{row.original.cinema?.address}</div>
-    ),
   },
   {
     accessorKey: "name",
@@ -100,7 +84,7 @@ const createColumns = (
     accessorKey: "total_seats",
     header: "Tổng số ghế",
     cell: ({ row }) => (
-      <div className="capitalize text-center">{row.getValue("total_seats")}</div>
+      <div className="capitalize ">{row.getValue("total_seats")}</div>
     ),
   },
   {
@@ -110,6 +94,32 @@ const createColumns = (
       <div className="capitalize">{row.original.status?.label}</div>
     ),
   },
+{
+  accessorKey: "created_at",
+  header: "Ngày Tạo",
+  cell: ({ row }) => {
+    const raw = row.getValue("created_at") as string | undefined;
+    return (
+      <div className="capitalize">
+        {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
+      </div>
+    );
+  },
+},
+{
+  accessorKey: "updated_at",
+  header: "Ngày Sửa Gần Nhất",
+  cell: ({ row }) => {
+    const raw = row.getValue("updated_at") as string | undefined;
+    return (
+      <div className="capitalize">
+        {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
+      </div>
+    );
+  },
+},
+
+
   {
     id: "actions",
     enableHiding: false,
@@ -143,11 +153,25 @@ const createColumns = (
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                router.push(redirectConfig.movieDetail(room.id));
+                router.push(redirectConfig.roomDetail(room.id));
               }}
             >
               Chi tiết
             </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={redirectConfig.roomUpdate(room.id)}>Sửa phòng chiếu</Link>
+            </DropdownMenuItem>
+             <DropdownMenuItem
+                          onSelect={() => {
+                          if (confirm("Bạn chắc chắn muốn xóa phim này?")) {
+                            deleteRoom(room.id);
+                          }
+                          }}
+                          disabled={isPending}
+                          className="text-red-500 focus:text-red-600"
+                        >
+                          {isPending ? "Đang xóa..." : "Xóa"}
+                        </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -162,6 +186,8 @@ export function RoomTable({
   currentPage,
 }: RoomTableProps) {
   const router = useRouter();
+  const { mutate: deleteRoom, isPending } = useDeleteRoom();
+  
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -170,7 +196,7 @@ export function RoomTable({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const columns = React.useMemo(() => createColumns(router), [router]);
+  const columns = React.useMemo(() => createColumns(router,deleteRoom,isPending), [router,deleteRoom,isPending]);
 
   const table = useReactTable({
     data,
@@ -203,10 +229,6 @@ export function RoomTable({
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
-        <Input
-          placeholder="Tìm kiếm tên rạp chiếu phim..."
-          className="max-w-sm"
-        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
