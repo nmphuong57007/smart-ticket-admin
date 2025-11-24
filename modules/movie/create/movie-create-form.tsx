@@ -424,10 +424,10 @@ export default function MovieCreateForm({
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
                 >
-                  <option value="">Chọn trạng thái</option>
+                  
                   <option value="coming">Sắp chiếu</option>
-                  <option value="showing">Đang chiếu</option>
-                  <option value="stopped">Dừng chiếu</option>
+                  {/* <option value="showing">Đang chiếu</option>
+                  <option value="stopped">Dừng chiếu</option> */}
                 </select>
               </FormControl>
               <FormMessage />

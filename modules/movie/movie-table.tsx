@@ -41,6 +41,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useDeleteMovie } from "@/api/hooks/use-movie-delete";
+import Link from "next/link";
 
 
 interface MovieTableProps {
@@ -157,7 +158,7 @@ const createColumns = (
     enableHiding: false,
     header: "Hành động",
     cell: ({ row }) => {
-      const cinema = row.original;
+      const movie = row.original;
 
       return (
         <DropdownMenu>
@@ -173,9 +174,9 @@ const createColumns = (
 
             <DropdownMenuItem
               onClick={() => {
-                navigator.clipboard.writeText(cinema.id.toString());
+                navigator.clipboard.writeText(movie.id.toString());
                 toast.success(
-                  `Đã sao chép ID ${cinema.id} rạp chiếu phim vào clipboard`
+                  `Đã sao chép ID ${movie.id} rạp chiếu phim vào clipboard`
                 );
               }}
             >
@@ -185,15 +186,18 @@ const createColumns = (
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                router.push(redirectConfig.movieDetail(cinema.id));
+                router.push(redirectConfig.movieDetail(movie.id));
               }}
             >
               Chi tiết
             </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href={redirectConfig.movieUpdate(movie.id)}>Sửa phim</Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={() => {
               if (confirm("Bạn chắc chắn muốn xóa phim này?")) {
-                deleteMovie(cinema.id);
+                deleteMovie(movie.id);
               }
               }}
               disabled={isPending}
