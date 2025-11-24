@@ -6,28 +6,22 @@ import Link from "next/link";
 import CardWrapperTable from "@/components/card-wrapper-table";
 import { Button } from "@/components/ui/button";
 import { redirectConfig } from "@/helpers/redirect-config";
-import MovieCreateForm from "./movie-create-form";
-import { useRenge } from "@/api/hooks/use-genre";
+import RoomCreateForm from "./room-create";
 
-export default function MovieCreateContainer() {
-  const {data: rengeData} = useRenge();
-  if (rengeData) console.log("rengeData:", rengeData);
+export default function RoomCreateContainer() {
+    
   return (
     <CardWrapperTable
       title={
         <Button asChild variant="ghost" style={{ padding: 0 }}>
-          <Link href={redirectConfig.movies}>
+          <Link href={redirectConfig.rooms}>
             <ArrowLeft />
-            Danh Sách Phim
+            Danh Sách Phòng Chiếu
           </Link>
         </Button>
       }
     >
-      {rengeData && (
-      <MovieCreateForm rengeData={rengeData?.data??[]} />
-      )}
-      
-      
+       <RoomCreateForm/>
     </CardWrapperTable>
   );
 }

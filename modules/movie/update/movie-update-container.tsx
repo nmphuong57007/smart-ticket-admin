@@ -6,10 +6,10 @@ import Link from "next/link";
 import CardWrapperTable from "@/components/card-wrapper-table";
 import { Button } from "@/components/ui/button";
 import { redirectConfig } from "@/helpers/redirect-config";
-import MovieCreateForm from "./movie-create-form";
 import { useRenge } from "@/api/hooks/use-genre";
+import MovieUpdateForm from "./movie-update-form";
 
-export default function MovieCreateContainer() {
+export default function MovieUpdateContainer() {
   const {data: rengeData} = useRenge();
   if (rengeData) console.log("rengeData:", rengeData);
   return (
@@ -18,13 +18,13 @@ export default function MovieCreateContainer() {
         <Button asChild variant="ghost" style={{ padding: 0 }}>
           <Link href={redirectConfig.movies}>
             <ArrowLeft />
-            Danh Sách Phim
+            Chi tiết Phim
           </Link>
         </Button>
       }
     >
       {rengeData && (
-      <MovieCreateForm rengeData={rengeData?.data??[]} />
+      <MovieUpdateForm rengeData={rengeData?.data??[]} />
       )}
       
       

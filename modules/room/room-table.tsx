@@ -13,7 +13,6 @@ import {
 } from "@tanstack/react-table";
 import { ChevronDown, MoreHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -35,130 +34,98 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { redirectConfig } from "@/helpers/redirect-config";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useDeleteMovie } from "@/api/hooks/use-movie-delete";
 import Link from "next/link";
+import { useDeleteRoom } from "@/api/hooks/use-room-delete";
+import moment from "moment";
 
 
-interface MovieTableProps {
-  data: CinemaType[];
+interface RoomTableProps {
+  data: RoomType["items"];
   setPage: React.Dispatch<React.SetStateAction<number>>;
   lastPage: number;
   currentPage: number;
 }
 
-export type CinemaType = {
-  id: number;
-  title: string;
-  poster: string;
-  trailer: string;
-  description: string;
-  genre: string;
-  duration: number;
-  format: string;
-  language: string;
-  release_date: string;
-  end_date: null;
-  status: string;
-  created_at: string;
-  updated_at: string;
+export type RoomType = {
+   items: {
+        id: number;
+        name: string;
+        seat_map: string[][];
+        total_seats: number;
+        status: {
+            code: string;
+            label: string;
+        };
+        created_at: string;
+        updated_at: string;
+    }[];
 };
+
+type RoomItem = RoomType["items"][number];
+
 const createColumns = (
   router: ReturnType<typeof useRouter>,
-  deleteMovie: (id: number) => void,
+  deleteRoom: (id: number) => void,
   isPending: boolean
-): ColumnDef<CinemaType>[] => [
+): ColumnDef<RoomItem>[] => [
   {
     accessorKey: "id",
     header: "ID",
     cell: ({ row }) => <div className="capitalize">{row.getValue("id")}</div>,
   },
-
   {
-    accessorKey: "title",
-    header: "Tên Phim",
+    accessorKey: "name",
+    header: "Tên phòng",
     cell: ({ row }) => (
-      <div className="capitalize line-clamp-1 w-48">{row.getValue("title")}</div>
+    <div className="capitalize">{row.getValue("name")}</div>
     ),
   },
-
   {
-    accessorKey: "poster",
-    header: "Ảnh Poster",
+    accessorKey: "total_seats",
+    header: "Tổng số ghế",
     cell: ({ row }) => (
-      <div className="capitalize w-[80px] h-[120px] relative overflow-hidden">
-        <Image
-          src={row.getValue("poster")}
-          alt={`Poster of ${row.getValue("title")}`}
-          
-          fill
-          className="object-cover"
-        />
-      </div>
+      <div className="capitalize ">{row.getValue("total_seats")}</div>
     ),
   },
-
   {
-    accessorKey: "trailer",
-    header: "Trailer",
+    accessorKey: "status.label",
+    header: "Trạng thái",
     cell: ({ row }) => (
+      <div className="capitalize">{row.original.status?.label}</div>
+    ),
+  },
+{
+  accessorKey: "created_at",
+  header: "Ngày Tạo",
+  cell: ({ row }) => {
+    const raw = row.getValue("created_at") as string | undefined;
+    return (
       <div className="capitalize">
-        <a
-          href={row.getValue("trailer")}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600"
-        >
-          Xem tại đây
-        </a>
+        {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
       </div>
-    ),
+    );
   },
+},
+{
+  accessorKey: "updated_at",
+  header: "Ngày Sửa Gần Nhất",
+  cell: ({ row }) => {
+    const raw = row.getValue("updated_at") as string | undefined;
+    return (
+      <div className="capitalize">
+        {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
+      </div>
+    );
+  },
+},
 
-  {
-    accessorKey: "description",
-    header: "Mô Tả",
-    cell: ({ row }) => (
-      <Tooltip>
-        <TooltipTrigger>
-          <div className="capitalize text-center line-clamp-1 w-48">
-            {row.getValue("description")}
-          </div>
-        </TooltipTrigger>
-      
-        <TooltipContent>
-          <p>{row.getValue("description")}</p>
-        </TooltipContent>
-      </Tooltip>
-    ),
-  },
-
-  {
-    accessorKey: "duration",
-    header: "Thời Lượng (phút)",
-    cell: ({ row }) => (
-      <div className="capitalize text-center">{row.getValue("duration")}</div>
-    ),
-  },
-
-  {
-    accessorKey: "release_date",
-    header: "Ngày Phát Hành",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("release_date")}</div>
-    ),
-  },
 
   {
     id: "actions",
     enableHiding: false,
     header: "Hành động",
     cell: ({ row }) => {
-      const movie = row.original;
+      const room = row.original;
 
       return (
         <DropdownMenu>
@@ -174,9 +141,9 @@ const createColumns = (
 
             <DropdownMenuItem
               onClick={() => {
-                navigator.clipboard.writeText(movie.id.toString());
+                navigator.clipboard.writeText(room.id.toString());
                 toast.success(
-                  `Đã sao chép ID ${movie.id} rạp chiếu phim vào clipboard`
+                  `Đã sao chép ID ${room.id} rạp chiếu phim vào clipboard`
                 );
               }}
             >
@@ -186,25 +153,25 @@ const createColumns = (
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => {
-                router.push(redirectConfig.movieDetail(movie.id));
+                router.push(redirectConfig.roomDetail(room.id));
               }}
             >
               Chi tiết
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href={redirectConfig.movieUpdate(movie.id)}>Sửa phim</Link>
+              <Link href={redirectConfig.roomUpdate(room.id)}>Sửa phòng chiếu</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => {
-              if (confirm("Bạn chắc chắn muốn xóa phim này?")) {
-                deleteMovie(movie.id);
-              }
-              }}
-              disabled={isPending}
-              className="text-red-500 focus:text-red-600"
-            >
-              {isPending ? "Đang xóa..." : "Xóa"}
-            </DropdownMenuItem>
+             <DropdownMenuItem
+                          onSelect={() => {
+                          if (confirm("Bạn chắc chắn muốn xóa phim này?")) {
+                            deleteRoom(room.id);
+                          }
+                          }}
+                          disabled={isPending}
+                          className="text-red-500 focus:text-red-600"
+                        >
+                          {isPending ? "Đang xóa..." : "Xóa"}
+                        </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -212,15 +179,15 @@ const createColumns = (
   },
 ];
 
-export function MovieTable({
+export function RoomTable({
   data,
   setPage,
   lastPage,
   currentPage,
-}: MovieTableProps) {
+}: RoomTableProps) {
   const router = useRouter();
-  const { mutate: deleteMovie, isPending } = useDeleteMovie();
-
+  const { mutate: deleteRoom, isPending } = useDeleteRoom();
+  
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -229,9 +196,7 @@ export function MovieTable({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const columns = React.useMemo(() => createColumns(router,deleteMovie,isPending), [router,deleteMovie,isPending]);
-
-  
+  const columns = React.useMemo(() => createColumns(router,deleteRoom,isPending), [router,deleteRoom,isPending]);
 
   const table = useReactTable({
     data,
@@ -264,10 +229,6 @@ export function MovieTable({
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
-        {/* <Input
-          placeholder="Tìm kiếm tên phim..."
-          className="max-w-sm"
-        /> */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

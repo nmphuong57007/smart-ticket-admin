@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  Building2,
   Calendar,
   FileText,
   Film,
@@ -54,16 +53,13 @@ const data = {
       icon: Home,
     },
     {
+
       title: "Người dùng",
       url: redirectConfig.users,
       icon: Users,
     },
     {
-      title: "Quản lý Rạp",
-      url: redirectConfig.cinemas,
-      icon: Building2,
-    },
-    {
+
       title: "Quản lý Phim",
       url: redirectConfig.movies,
       icon: Film,

@@ -1,3 +1,4 @@
+
 export const redirectConfig = {
   home: "/",
   login: "/login",
@@ -10,7 +11,13 @@ export const redirectConfig = {
   createMovie: "/movies/create",
   movies: "/movies",
   movieDetail: (id: string | number) => `/movies/${id}/detail`,
+  movieStatic: "/movies/static",
+  movieUpdate: (id: string | number) => `/movies/${id}/update`,
   rooms: "/rooms",
+  createRoom: "/rooms/create", 
+  roomDetail: (id: string | number) => `/rooms/${id}/detail`,
+  roomUpdate: (id: string | number) => `/rooms/${id}/update`,
+  roomStatic:"/rooms/static",
   seats: "/seats",
   showtimes: "/showtimes",
   tickets: "/tickets",
