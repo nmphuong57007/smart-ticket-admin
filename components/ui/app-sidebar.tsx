@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  Building2,
   Calendar,
   FileText,
   Film,
@@ -52,11 +51,6 @@ const data = {
       title: "Dashboard",
       url: redirectConfig.dashboard,
       icon: Home,
-    },
-    {
-      title: "Quản lý Rạp",
-      url: redirectConfig.cinemas,
-      icon: Building2,
     },
     {
       title: "Quản lý Phim",
