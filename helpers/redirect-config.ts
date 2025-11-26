@@ -23,6 +23,7 @@ export const redirectConfig = {
   createShowTime: "/showtimes/create", 
   showtimeDetail: (id: string | number) => `/showtimes/${id}/detail`,
   showtimeUpdate: (id: string | number) => `/showtimes/${id}/update`,
+  showtimeStatic: "/showtimes/static",
   tickets: "/tickets",
   seatReservation: "/seat-reservation",
   combos: "/combos",

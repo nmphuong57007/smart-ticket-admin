@@ -29,12 +29,14 @@ import {
 import { ChevronDownIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { useCreateShowTime } from "@/api/hooks/use-showtime-create";
-import { ShowTimeCreatePayload } from "@/api/interfaces/showtimes-interface";
+import { ConflictResponse, ShowTimeCreatePayload } from "@/api/interfaces/showtimes-interface";
+import type { AxiosError } from "axios";
+
 import instance from "@/lib/instance";
 
 
 // ==============================
-// INTERFACES - NO ANY ✔
+// INTERFACES
 // ==============================
 
 export interface MovieItem {
@@ -63,7 +65,6 @@ export const createShowtimeSchema = z
     show_time: z.string().min(1, "Giờ chiếu là bắt buộc"),
     end_time: z.string().min(1, "Giờ kết thúc là bắt buộc"),
     language_type: z.string().min(1, "Ngôn ngữ là bắt buộc"),
-    price: z.coerce.number().min(1, "Giá vé phải lớn hơn 0"),
   })
   .refine(
     (data) => data.end_time >= data.show_time,
@@ -92,7 +93,6 @@ export default function ShowTimeCreateForm() {
       show_time: "",
       end_time: "",
       language_type: "",
-      price: "",
     },
   });
 
@@ -147,57 +147,50 @@ export default function ShowTimeCreateForm() {
     form.setValue("end_time", `${endH}:${endM}`);
   },);
 
-
-
-  // ==============================
-  // CHECK CONFLICT (NO ANY)
-  // ==============================
-
-  // async function checkConflict(payload: ShowTimeCreatePayload): Promise<boolean> {
-  //   try {
-  //     const res = await instance.get("/api/showtimes/check-overlap", {
-  //       params: payload,
-  //     });
-
-  //     return Boolean(res.data.conflict);
-  //   } catch {
-  //     return false;
-  //   }
-  // }
-
-
-
   // ==============================
   // SUBMIT
   // ==============================
 
-  const onSubmit = async (data: z.infer<typeof createShowtimeSchema>) => {
-    const payload: ShowTimeCreatePayload = {
-      movie_id: Number(data.movie_id),
-      room_id: Number(data.room_id),
-      show_date: data.show_date,
-      show_time: data.show_time,
-      end_time: data.end_time,
-      language_type: data.language_type,
-      price: Number(data.price),
-    };
-
-    // PRE-CHECK CONFLICT
-    // if (await checkConflict(payload)) {
-    //   toast.error("Lịch chiếu bị trùng trong phòng này!");
-    //   return;
-    // }
-
-    createShowTime(payload, {
-      onSuccess: () => {
-        toast.success("Tạo suất chiếu thành công!");
-        router.push(redirectConfig.showtimes);
-      },
-      onError: () => {
-        toast.error("Tạo thất bại!");
-      },
-    });
+const onSubmit = (data: z.infer<typeof createShowtimeSchema>) => {
+  const payload: ShowTimeCreatePayload = {
+    movie_id: Number(data.movie_id),
+    room_id: Number(data.room_id),
+    show_date: data.show_date,
+    show_time: data.show_time,
+    end_time: data.end_time,
+    language_type: data.language_type,
   };
+
+  createShowTime(payload, {
+    onSuccess: () => {
+      toast.success("Tạo suất chiếu thành công!");
+      router.push(redirectConfig.showtimes);
+    },
+
+    onError: (error: AxiosError<ConflictResponse>) => {
+      const res = error.response?.data;
+
+      if (res?.conflict) {
+        const c = res.conflict;
+
+        toast.error(
+          <div className="space-y-1">
+            <p>⛔ <b>Lịch chiếu bị trùng!</b></p>
+            <p>• ID trùng: <b>{c.existing_showtime_id}</b></p>
+            <p>• Phim: <b>{c.existing_movie}</b></p>
+            <p>• Giờ trùng: {c.existing_start} → {c.existing_end}</p>
+            <p>• Cần bắt đầu sau: {c.required_next_start}</p>
+          </div>
+        );
+
+        return;
+      }
+
+      toast.error(res?.message || "Tạo thất bại!");
+    },
+  });
+};
+
 
 
 
@@ -354,31 +347,6 @@ export default function ShowTimeCreateForm() {
         }}
         />
 
-
-
-
-        {/* END TIME (READONLY)
-        <FormField
-          control={form.control}
-          name="end_time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Giờ kết thúc</FormLabel>
-              <FormControl>
-                <Input
-                  type="time"
-                  step="60"
-                  readOnly
-                  value={field.value ?? ""}
-                  className="h-10 px-3 bg-muted"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        /> */}
-
-
         {/* LANGUAGE */}
         <FormField
           control={form.control}
@@ -399,27 +367,6 @@ export default function ShowTimeCreateForm() {
           )}
         />
 
-
-        {/* PRICE */}
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Giá vé</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder="Giá vé"
-                  {...field}
-                  value={field.value?.toString() ?? ""}
-                  onChange={(e) => field.onChange(e.target.value)}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
 
         <Button disabled={isCreating} type="submit" className="w-full">

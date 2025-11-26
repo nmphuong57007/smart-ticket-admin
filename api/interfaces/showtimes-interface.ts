@@ -81,7 +81,7 @@ export interface ShowTimeCreatePayload {
   show_time: string;
   end_time: string;
   language_type: string;
-  price: number;
+ 
 }
 
 
@@ -158,6 +158,68 @@ export interface RoomItem {
 export interface ShowTimeDeleteResInterface{
    success: boolean;
     message: string;
+}
+
+
+export interface ConflictResponse {
+  success: boolean;
+  message: string;
+  conflict: {
+    existing_showtime_id: number;
+    room_id: number;
+    existing_movie: string;
+    existing_start: string;
+    existing_end: string;
+    required_next_start: string;
+  };
+}
+
+// Thống kê tổng
+export interface ShowtimeStatisticsAll {
+  total_showtimes: number;
+  total_movies: number;
+  total_rooms: number;
+}
+
+// Phim trong suất chiếu
+export interface MovieInShowtime {
+  id: number;
+  title: string;
+  poster: string;
+  duration: number;
+  release_date: string | null;
+  language: string | null;
+}
+
+// Phòng chiếu trong suất chiếu
+export interface RoomInShowtime {
+  id: number;
+  name: string;
+}
+
+// Suất chiếu theo ngày
+export interface ShowtimeItem {
+  id: number;
+  movie_id: number;
+  room_id: number;
+  movie: MovieInShowtime;
+  room: RoomInShowtime;
+  show_date: string;
+  show_time: string;
+  end_time: string;
+  format: string;
+  language_type: string;
+  price: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ShowtimeStatisticsByDate {
+  date: string;
+  total_showtimes: number;
+  total_movies: number;
+  total_rooms: number;
+  showtimes: ShowtimeItem[];
 }
 
 

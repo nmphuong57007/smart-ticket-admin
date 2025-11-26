@@ -17,8 +17,9 @@ import { ChevronDownIcon } from "lucide-react";
 
 import instance from "@/lib/instance";
 import { useUpdateShowTime } from "@/api/hooks/use-showtime-update";
+import type { AxiosError } from "axios";
 
-import { MovieItem, RoomItem } from "@/api/interfaces/showtimes-interface";
+import { ConflictResponse, MovieItem, RoomItem } from "@/api/interfaces/showtimes-interface";
 
 // =======================
 // ZOD SCHEMA
@@ -29,12 +30,12 @@ const formSchema = z.object({
   show_date: z.string().min(1),
   show_time: z.string().min(1),
   language_type: z.string().min(1),
-  price: z.number().min(1),
 });
 
 export default function ShowTimeUpdateForm() {
   const router = useRouter();
   const { id: showtimeId } = useParams();
+
 
   const { mutate: updateShowTime, isPending } = useUpdateShowTime();
 
@@ -46,7 +47,7 @@ export default function ShowTimeUpdateForm() {
       show_date: "",
       show_time: "",
       language_type: "",
-      price: 0,
+
     },
   });
 
@@ -59,6 +60,8 @@ export default function ShowTimeUpdateForm() {
 
   // SELECT MOVIE TO CHECK RELEASE DATE
   const selectedMovie = movies.find((m) => m.id === Number(form.watch("movie_id")));
+
+  const watchDate = form.watch("show_date");
 
   // LOAD MOVIES + ROOMS
   useEffect(() => {
@@ -75,20 +78,23 @@ export default function ShowTimeUpdateForm() {
   useEffect(() => {
     if (!showtimeId) return;
 
-    instance.get(`/api/showtimes/${showtimeId}`).then((res) => {
-      const st = res.data.data;
+ instance.get(`/api/showtimes/${showtimeId}`).then((res) => {
+  const st = res.data.data;
 
-      form.reset({
-        movie_id: st.movie_id,
-        room_id: st.room_id,
-        show_date: st.show_date,
-        show_time: st.show_time,
-        language_type: st.language_type,
-        price: st.price,
-      });
+  // convert 12h -> 24h nếu API trả về dạng SA/CH
+  const cleanTime = st.show_time.slice(0, 5); // “08:01” or “21:00”
 
-      setShowDate(new Date(st.show_date));
-    });
+  form.reset({
+    movie_id: st.movie_id,
+    room_id: st.room_id,
+    show_date: st.show_date.split(" ")[0],
+    show_time: cleanTime,
+    language_type: st.language_type,
+  });
+
+  setShowDate(new Date(st.show_date));
+});
+
   }, [showtimeId, form]);
 
   // SUBMIT
@@ -100,7 +106,6 @@ export default function ShowTimeUpdateForm() {
     formData.append("show_date", data.show_date);
     formData.append("show_time", data.show_time);
     formData.append("language_type", data.language_type);
-    formData.append("price", String(data.price));
 
     updateShowTime(
       { id: Number(showtimeId), data: formData },
@@ -109,10 +114,33 @@ export default function ShowTimeUpdateForm() {
           toast.success("Cập nhật suất chiếu thành công!");
           router.back();
         },
-        onError: () => toast.error("Cập nhật thất bại!"),
+        onError: (error) => {
+          const axiosErr = error as AxiosError<ConflictResponse>;
+          const res = axiosErr.response?.data;
+
+          if (res?.conflict) {
+            const c = res.conflict;
+
+            toast.error(
+              <div className="space-y-1">
+                <p>⛔ <b>Lịch chiếu bị trùng!</b></p>
+                <p>• ID trùng: <b>{c.existing_showtime_id}</b></p>
+                <p>• Phim: <b>{c.existing_movie}</b></p>
+                <p>• Giờ trùng: {c.existing_start} → {c.existing_end}</p>
+                <p>• Cần bắt đầu sau: {c.required_next_start}</p>
+              </div>
+            );
+
+            return;
+          }
+
+          toast.error(res?.message || "Cập nhật thất bại!");
+        },
+
       }
     );
   };
+
 
   return (
     <Form {...form}>
@@ -223,14 +251,36 @@ export default function ShowTimeUpdateForm() {
         <FormField
           control={form.control}
           name="show_time"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Giờ chiếu</FormLabel>
-              <FormControl>
-                <Input type="time" {...field} />
-              </FormControl>
+          render={({ field }) => {
+            // Lấy giờ máy
+            const now = new Date();
+            const HH = String(now.getHours()).padStart(2, "0");
+            const MM = String(now.getMinutes()).padStart(2, "0");
+            const currentTime = `${HH}:${MM}`;
+
+            // Lấy ngày máy chuẩn YYYY-MM-DD
+            const todayStr = new Date().toLocaleDateString("en-CA");
+
+            const isToday = watchDate === todayStr;
+         return(
+             <FormItem>
+                <FormLabel>Giờ chiếu</FormLabel>
+                <FormControl>
+                <Input
+                {...field}
+                    type="time"
+                    step="60"
+                    lang="en"
+                    min={isToday ? currentTime : undefined}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="h-10 px-3 bg-background"
+                />
+                </FormControl>
+                <FormMessage />
             </FormItem>
-          )}
+         );
+          }}
         />
 
         {/* LANGUAGE */}
@@ -246,24 +296,6 @@ export default function ShowTimeUpdateForm() {
                   <option value="dub">Lồng tiếng</option>
                   <option value="narrated">Thuyết minh</option>
                 </select>
-              </FormControl>
-            </FormItem>
-          )}
-        />
-
-        {/* PRICE */}
-        <FormField
-          control={form.control}
-          name="price"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Giá vé</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  value={field.value}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                />
               </FormControl>
             </FormItem>
           )}

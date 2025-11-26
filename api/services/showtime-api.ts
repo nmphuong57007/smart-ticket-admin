@@ -5,7 +5,9 @@ import {
     ShowTimeCreatePayload,
     ShowTimeDetailResInterface,
     ShowTimeUpdateResInterface,
-    ShowTimeDeleteResInterface
+    ShowTimeDeleteResInterface,
+    ShowtimeStatisticsAll,
+    ShowtimeStatisticsByDate
 } from "../interfaces/showtimes-interface";
 
 export const getShowtimes = async (
@@ -79,4 +81,18 @@ export const updateShowTime = async (
 export const deleteShowTime = async (showtimeId: number): Promise<ShowTimeDeleteResInterface> => {
   const res = await instance.delete<ShowTimeDeleteResInterface>(`/api/showtimes/${showtimeId}`);
   return res.data;
+};
+
+export const getShowtimeStatisticsAll = async (): Promise<ShowtimeStatisticsAll> => {
+  const res = await instance.get("/api/showtimes/statistics");
+  return res.data.data; 
+};
+
+export const getShowtimeStatisticsByDate = async (
+  date: string
+): Promise<ShowtimeStatisticsByDate> => {
+  const res = await instance.get("/api/showtimes/statistics/by-date", {
+    params: { date },
+  });
+  return res.data.data;
 };

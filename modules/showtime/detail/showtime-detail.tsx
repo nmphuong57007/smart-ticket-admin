@@ -218,26 +218,59 @@ export default function ShowTimeDetail({ showtime, isLoading }: ShowTimeDetailPr
   </div>
 </div>
 
-{/* CHÚ THÍCH MÀU */}
-<div className="flex justify-center gap-6 mt-4">
-  <div className="flex items-center gap-2">
-    <div className="w-4 h-4 bg-gray-200 border border-gray-400 rounded"></div>
-    <span className="text-sm">Ghế trống</span>
+{/* CHÚ THÍCH GIÁ VÀ MÀU */}
+<div className="flex flex-col items-center gap-4 mt-6">
+
+  {/* GIÁ THEO NGÀY */}
+  <div className="text-lg font-semibold">
+    Giá vé ngày {moment(showtime.show_date).format("DD/MM/YYYY")}
   </div>
 
-  <div className="flex items-center gap-2">
-    <div className="w-4 h-4 bg-blue-600 border border-blue-800 rounded"></div>
-    <span className="text-sm">Ghế đã đặt</span>
+  <div className="flex gap-8">
+
+    {/* GHẾ THƯỜNG */}
+    <div className="flex items-center gap-2">
+      <div className="w-4 h-4 bg-gray-200 border border-gray-400 rounded"></div>
+      <span className="text-sm">
+        Ghế thường:{" "}
+        <b>{showtime.price.toLocaleString()} đ</b>
+      </span>
+    </div>
+
+    {/* GHẾ VIP */}
+    <div className="flex items-center gap-2">
+      <div className="w-4 h-4 bg-red-100 border border-red-500 rounded"></div>
+      <span className="text-sm">
+        Ghế VIP:{" "}
+        <b>{Math.round(showtime.price * 1.5).toLocaleString()} đ</b>
+      </span>
+    </div>
   </div>
 
-  <div className="flex items-center gap-2">
-    <div className="w-4 h-4 bg-red-100 border border-red-500 rounded"></div>
-    <span className="text-sm">Ghế VIP</span>
-  </div>
+  <hr className="w-40 my-2 border-gray-300" />
 
-  <div className="flex items-center gap-2">
-    <div className="w-4 h-4 bg-gray-700 border border-gray-900 rounded opacity-70"></div>
-    <span className="text-sm">Ghế hỏng</span>
+  {/* CHÚ THÍCH TÌNH TRẠNG GHẾ */}
+  <div className="flex justify-center gap-6">
+
+    <div className="flex items-center gap-2">
+      <div className="w-4 h-4 bg-gray-200 border border-gray-400 rounded"></div>
+      <span className="text-sm">Ghế trống</span>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <div className="w-4 h-4 bg-blue-600 border border-blue-800 rounded"></div>
+      <span className="text-sm">Ghế đã đặt</span>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <div className="w-4 h-4 bg-red-100 border border-red-500 rounded"></div>
+      <span className="text-sm">Ghế VIP</span>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <div className="w-4 h-4 bg-gray-700 border border-gray-900 rounded opacity-70"></div>
+      <span className="text-sm">Ghế hỏng</span>
+    </div>
   </div>
 </div>
 

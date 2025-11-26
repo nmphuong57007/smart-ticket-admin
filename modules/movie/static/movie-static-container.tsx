@@ -21,7 +21,7 @@ export default function MovieStaticContainer() {
         <Button asChild variant="ghost" style={{ padding: 0 }}>
           <Link href={redirectConfig.movies}>
             <ArrowLeft />
-            Thống kê phim
+            Danh sách phim
           </Link>
         </Button>
       }

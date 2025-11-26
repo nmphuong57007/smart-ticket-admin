@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Fragment } from "react";
 import { useShowTimeDetail } from "@/api/hooks/use-showtime-detail";
 import ShowTimeDetail from "./showtime-detail";
+import { Spinner } from "@/components/ui/spinner";
 
 interface ShowTimeDetailContainerProps {
   id: string;
@@ -34,13 +35,17 @@ export default function ShowTimeDetailContainer({
       actions={
         <Fragment>
         <Button>
-          <Link href={redirectConfig.roomUpdate(id)}>Sửa phòng chiếu</Link>
+          <Link href={redirectConfig.showtimeUpdate(id)}>Sửa suất chiếu</Link>
         </Button>
         </Fragment>
       }
     >
-      {showtimeDetail?.data && (
+      {isLoading ? (
+        <Spinner className="size-10 mx-auto" />
+      ) : (
+        showtimeDetail?.data && (
         <ShowTimeDetail showtime={showtimeDetail.data} isLoading={isLoading} />
+        )
       )}
     </CardWrapperTable>
   );

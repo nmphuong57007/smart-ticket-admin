@@ -36,7 +36,7 @@ export  function ShowTimeContainer() {
             <Link href={redirectConfig.createShowTime}>Thêm mới suất chiếu</Link>
           </Button>
           <Button variant="secondary">
-            <Link href={redirectConfig.roomStatic}>Thống kê suất chiếu</Link>
+            <Link href={redirectConfig.showtimeStatic}>Thống kê suất chiếu</Link>
           </Button>
         </Fragment>
       }

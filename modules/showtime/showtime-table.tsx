@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { redirectConfig } from "@/helpers/redirect-config";
-import Link from "next/link";
 import moment from "moment";
 import { useDeleteShowTime } from "@/api/hooks/use-showtime-delete";
 
@@ -89,68 +88,66 @@ const createColumns = (
     accessorKey: "room.name",
     header: "Tên phòng chiếu",
     cell: ({ row }) => (
-    <div className="capitalize">{row.original.room?.name}</div>
+      <div className="capitalize">{row.original.room?.name}</div>
     ),
   },
   {
     accessorKey: "movie.title",
     header: "Tên phim",
     cell: ({ row }) => (
-      <div className="capitalize ">{row.original.movie?.title}</div>
+      <div className="capitalize">{row.original.movie?.title}</div>
     ),
   },
   {
     accessorKey: "format",
     header: "Định dạng",
     cell: ({ row }) => (
-      <div className="capitalize ">{row.getValue("format")}</div>
+      <div className="capitalize">{row.getValue("format")}</div>
     ),
   },
-    {
+  {
     accessorKey: "show_date",
     header: "Ngày Chiếu",
     cell: ({ row }) => {
-        const raw = row.getValue("show_date") as string | undefined;
-        return (
+      const raw = row.getValue("show_date") as string | undefined;
+      return (
         <div className="capitalize">
-            {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
+          {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
         </div>
-        );
+      );
     },
-    },
-    {
+  },
+  {
     accessorKey: "show_time",
     header: "Giờ Chiếu",
     cell: ({ row }) => {
-        const raw = row.getValue("show_time") as string | undefined;
-
-        return (
-        <div>
-            {raw ? moment(raw, "HH:mm").format("HH:mm") : "-"}
-        </div>
-        );
+      const raw = row.getValue("show_time") as string | undefined;
+      return <div>{raw ? moment(raw, "HH:mm").format("HH:mm") : "-"}</div>;
     },
-    },
-    {
+  },
+  {
     accessorKey: "end_time",
     header: "Giờ Kết Thúc",
     cell: ({ row }) => {
-        const raw = row.getValue("end_time") as string | undefined;
-
-        return (
-        <div>
-            {raw ? moment(raw, "HH:mm").format("HH:mm") : "-"}
-        </div>
-        );
+      const raw = row.getValue("end_time") as string | undefined;
+      return <div>{raw ? moment(raw, "HH:mm").format("HH:mm") : "-"}</div>;
     },
-    },
+  },
 
+  // ==============================
+  // ACTION COLUMN
+  // ==============================
   {
     id: "actions",
     enableHiding: false,
     header: "Hành động",
     cell: ({ row }) => {
       const showtime = row.original;
+
+      // ==== TÍNH TRẠNG THÁI KHÓA ====
+      const now = new Date();
+      const start = new Date(`${showtime.show_date}T${showtime.show_time}`);
+      const isLocked = now >= start; // nếu muốn chỉ khóa khi chiếu xong: now > end
 
       return (
         <DropdownMenu>
@@ -164,29 +161,41 @@ const createColumns = (
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
 
+            {/* COPY ID */}
             <DropdownMenuItem
               onClick={() => {
                 navigator.clipboard.writeText(showtime.id.toString());
-                toast.success(
-                  `Đã sao chép ID ${showtime.id} suất chiếu vào clipboard`
-                );
+                toast.success(`Đã sao chép ID ${showtime.id} vào clipboard`);
               }}
             >
               Sao chép ID
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
+
+            {/* DETAIL */}
             <DropdownMenuItem
+              onClick={() =>
+                router.push(redirectConfig.showtimeDetail(showtime.id))
+              }
+            >
+              Chi tiết
+            </DropdownMenuItem>
+
+            {/* UPDATE (DISABLED IF LOCKED) */}
+            <DropdownMenuItem
+              disabled={isLocked}
+              className={isLocked ? "opacity-50 cursor-not-allowed" : ""}
               onClick={() => {
-                router.push(redirectConfig.showtimeDetail(showtime.id));
+                if (!isLocked)
+                  router.push(redirectConfig.showtimeUpdate(showtime.id));
               }}
             >
-              Chi tiết  
+              Sửa suất chiếu
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link href={redirectConfig.showtimeUpdate(showtime.id)}>Sửa suất chiếu</Link>
-            </DropdownMenuItem>
-             <DropdownMenuItem
+
+            {/* DELETE */}
+            <DropdownMenuItem
               onClick={() => {
                 if (confirm("Bạn chắc chắn muốn xóa suất chiếu này?")) {
                   deleteShowTime(showtime.id);
@@ -197,13 +206,13 @@ const createColumns = (
             >
               {isPending ? "Đang xóa..." : "Xóa"}
             </DropdownMenuItem>
-
           </DropdownMenuContent>
         </DropdownMenu>
       );
     },
   },
 ];
+
 
 export function ShowTimeTable({
   data,
@@ -304,21 +313,33 @@ export function ShowTimeTable({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const st = row.original;
+
+                // ====== XÁC ĐỊNH TÌNH TRẠNG SUẤT CHIẾU ======
+                const now = new Date();
+                const start = new Date(`${st.show_date}T${st.show_time}`);
+
+                // true = đã chiếu hoặc đang chiếu
+                const isLocked = now >= start;
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={isLocked ? "bg-gray-200 text-gray-600" : ""}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell
@@ -330,6 +351,7 @@ export function ShowTimeTable({
               </TableRow>
             )}
           </TableBody>
+
         </Table>
       </div>
 
