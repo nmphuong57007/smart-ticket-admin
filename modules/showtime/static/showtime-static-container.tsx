@@ -4,33 +4,31 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-import { useMovieStatic } from "@/api/hooks/use-movie-static";
 import CardWrapperTable from "@/components/card-wrapper-table";
 import { Button } from "@/components/ui/button";
 import { redirectConfig } from "@/helpers/redirect-config";
+
 import Charts from "./charts";
+import { useShowtimeStatisticsAll } from "@/api/hooks/use-showtime-static";
 
-export default function MovieStaticContainer() {
-  const { data: movieStaticData, isError, isLoading } = useMovieStatic();
+export default function ShowTimeStaticContainer() {
+  const { data, isError, isLoading } = useShowtimeStatisticsAll();
 
-  if (isError) toast.error("Lỗi tải thống kê phim");
+  if (isError) toast.error("Lỗi tải thống kê suất chiếu");
 
   return (
     <CardWrapperTable
       title={
         <Button asChild variant="ghost" style={{ padding: 0 }}>
-          <Link href={redirectConfig.movies}>
+          <Link href={redirectConfig.showtimes}>
             <ArrowLeft />
-            Danh sách phim
+            Danh sách suất chiếu
           </Link>
         </Button>
       }
     >
-      {movieStaticData && (
-        <Charts
-          movieStaticData={movieStaticData.data}
-          isLoading={isLoading}
-      />    )}
+      {/* Nếu data có → render Charts */}
+      {data && <Charts isLoading={isLoading} />}
     </CardWrapperTable>
   );
 }
