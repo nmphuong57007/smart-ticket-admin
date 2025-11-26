@@ -88,7 +88,7 @@ export default function MovieCreateForm({
       language: "",
       release_date: "",
       end_date: "",
-      status: "",
+      status: "coming",
     },
   });
 
@@ -319,9 +319,11 @@ export default function MovieCreateForm({
                   onChange={(e) => field.onChange(e.target.value)}
                 >
                   <option value="">Chọn ngôn ngữ</option>
-                  <option value="sub">Phụ đề</option>
-                  <option value="narrated">Thuyết minh</option>
-                  <option value="dub">lồng tiếng</option>
+                  <option value="Tiếng Anh">Tiếng Anh</option>
+                  <option value="Tiếng Việt">Tiếng Việt</option>
+                  <option value="Tiếng Hàn">Tiếng Hàn</option>
+                  <option value="Tiếng Nhật">Tiếng Nhật</option>
+                  <option value="Tiếng Trung">Tiếng Trung</option>
                 </select>
               </FormControl>
               <FormMessage />
@@ -425,9 +427,9 @@ export default function MovieCreateForm({
                   onChange={(e) => field.onChange(e.target.value)}
                 >
                   
+                  <option value="">Chọn trạng thái</option>
                   <option value="coming">Sắp chiếu</option>
-                  {/* <option value="showing">Đang chiếu</option>
-                  <option value="stopped">Dừng chiếu</option> */}
+                  
                 </select>
               </FormControl>
               <FormMessage />

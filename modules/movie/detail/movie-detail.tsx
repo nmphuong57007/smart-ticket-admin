@@ -39,6 +39,12 @@ export default function MovieDetail({ movie, isLoading }: MovieDetailProps) {
   if (!movie) {
     return <div>Không có dữ liệu phim.</div>;
   }
+  const STATUS_MAP: Record<string, string> = {
+    coming: "Sắp chiếu",
+    showing: "Đang chiếu",
+    stopped: "Ngừng chiếu",
+   
+  };
 console.log("Poster URL:", movie.poster);
   return (
     <div className="flex">
@@ -100,7 +106,7 @@ console.log("Poster URL:", movie.poster);
           <li>
             <div className="flex items-center gap-4 "> 
             <LucideCheck className="w-5 h-5 text-gray-700"  />  
-            Trạng thái: {movie.status}
+            Trạng thái: {STATUS_MAP[movie.status] || "Không xác định"}
             </div>
           </li>
           <li>
