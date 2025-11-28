@@ -86,21 +86,21 @@ const createColumns = (
   },
   {
     accessorKey: "room.name",
-    header: "Tên phòng chiếu",
+    header: "Tên Phòng Chiếu",
     cell: ({ row }) => (
       <div className="capitalize">{row.original.room?.name}</div>
     ),
   },
   {
     accessorKey: "movie.title",
-    header: "Tên phim",
+    header: "Tên Phim",
     cell: ({ row }) => (
       <div className="capitalize">{row.original.movie?.title}</div>
     ),
   },
   {
     accessorKey: "format",
-    header: "Định dạng",
+    header: "Định Dạng",
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("format")}</div>
     ),
@@ -140,7 +140,7 @@ const createColumns = (
   {
     id: "actions",
     enableHiding: false,
-    header: "Hành động",
+    header: "Hành Động",
     cell: ({ row }) => {
       const showtime = row.original;
 

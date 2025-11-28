@@ -75,21 +75,21 @@ const createColumns = (
   },
   {
     accessorKey: "name",
-    header: "Tên phòng",
+    header: "Tên Phòng",
     cell: ({ row }) => (
     <div className="capitalize">{row.getValue("name")}</div>
     ),
   },
   {
     accessorKey: "total_seats",
-    header: "Tổng số ghế",
+    header: "Tổng Số Ghế",
     cell: ({ row }) => (
       <div className="capitalize ">{row.getValue("total_seats")}</div>
     ),
   },
   {
     accessorKey: "status.label",
-    header: "Trạng thái",
+    header: "Trạng Thái",
     cell: ({ row }) => (
       <div className="capitalize">{row.original.status?.label}</div>
     ),
@@ -123,7 +123,7 @@ const createColumns = (
   {
     id: "actions",
     enableHiding: false,
-    header: "Hành động",
+    header: "Hành Động",
     cell: ({ row }) => {
       const room = row.original;
 
