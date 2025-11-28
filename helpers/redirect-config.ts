@@ -28,6 +28,8 @@ export const redirectConfig = {
   seatReservation: "/seat-reservation",
   combos: "/combos",
   discounts: "/discounts",
+  createDiscount: "/discounts/create",
+  discountUpdate: (id: string | number) => `/discounts/${id}/update`,
   points: "/points",
   contents: "/contents",
   settings: "/settings",
