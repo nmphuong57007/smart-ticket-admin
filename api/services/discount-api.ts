@@ -1,6 +1,7 @@
 import instance from "@/lib/instance";
 import { 
   DisconutCreateReqInterface, 
+  DiscountDisableResInterface, 
   DiscountResInterface ,
   DiscountUpdateReqInterface,
   DiscountUpdateResInterface,
@@ -39,4 +40,11 @@ export const updateDiscount = (id: number, data: DiscountUpdateReqInterface) => 
   return instance
     .patch<DiscountUpdateResInterface>(`/api/promotions/${id}`, data)
     .then((res) => res.data); // unwrap AxiosResponse
+};
+
+
+
+export const disableDiscount = async (id: number): Promise<DiscountDisableResInterface> => {
+  const res = await instance.delete(`/api/promotions/${id}`);
+  return res.data; // TRẢ VỀ data
 };

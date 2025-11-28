@@ -32,9 +32,6 @@ export  function DiscountContainer() {
           <Button asChild>
             <Link href={redirectConfig.createDiscount}>Thêm mới mã giảm giá</Link>
           </Button>
-          <Button variant="secondary">
-            <Link href={redirectConfig.roomStatic}>Thống kê mã giảm giá</Link>
-          </Button>
         </Fragment>
       }
     >

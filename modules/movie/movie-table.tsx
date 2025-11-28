@@ -156,7 +156,7 @@ const createColumns = (
   {
     id: "actions",
     enableHiding: false,
-    header: "Hành động",
+    header: "Hành Động",
     cell: ({ row }) => {
       const movie = row.original;
 

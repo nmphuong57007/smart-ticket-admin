@@ -40,9 +40,24 @@ export const formSchema = z
       .string()
       .min(1, "Phần trăm giảm giá là bắt buộc")
       .refine((v) => !isNaN(Number(v)), "Phần trăm giảm giá phải là số")
-      .refine((v) => Number(v) > 0 && Number(v) <= 100, "Giá trị phải từ 1 đến 100"),
+      .refine(
+        (v) => Number(v) > 0 && Number(v) <= 100,
+        "Giá trị phải từ 1 đến 100"
+      ),
 
-    start_date: z.string().min(1, "Ngày bắt đầu là bắt buộc"),
+    start_date: z
+      .string()
+      .min(1, "Ngày bắt đầu là bắt buộc")
+      .refine((v) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const start = new Date(v);
+        start.setHours(0, 0, 0, 0);
+
+        return start >= today;
+      }, "Ngày bắt đầu phải từ hôm nay trở đi"),
+
     end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
   })
   .superRefine((values, ctx) => {
@@ -56,10 +71,10 @@ export const formSchema = z
         code: z.ZodIssueCode.custom,
         path: ["end_date"],
         message: "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu",
-        });
-
+      });
     }
   });
+
 
 // ============================
 // COMPONENT

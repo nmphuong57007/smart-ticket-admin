@@ -35,8 +35,10 @@ import {
 import { toast } from "sonner";
 import { redirectConfig } from "@/helpers/redirect-config";
 import Link from "next/link";
-import { useDeleteRoom } from "@/api/hooks/use-room-delete";
 import moment from "moment";
+import { useDisableDiscount } from "@/api/hooks/use-discount-disable";
+import { DiscountDisableResInterface } from "@/api/interfaces/discount-interface";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 interface RoomTableProps {
@@ -64,8 +66,15 @@ type DiscontItem = DiscountType[][number];
 
 const createColumns = (
   router: ReturnType<typeof useRouter>,
-  deleteRoom: (id: number) => void,
-  isPending: boolean
+   disableDiscountFn: (
+    id: number,
+    options?: {
+      onSuccess?: (res: DiscountDisableResInterface) => void;
+      onError?: (err: unknown) => void;
+    }
+  ) => void,
+  isDisabling : boolean,
+  queryClient: ReturnType<typeof useQueryClient>
 ): ColumnDef<DiscontItem>[] => [
   {
     accessorKey: "id",
@@ -74,21 +83,21 @@ const createColumns = (
   },
   {
     accessorKey: "code",
-    header: "Tên mã giảm giá",
+    header: "Tên Mã Giảm Giá",
     cell: ({ row }) => (
     <div className="capitalize">{row.getValue("code")}</div>
     ),
   },
   {
     accessorKey: "discount_percent",
-    header: "Phần trăm giảm giá",
+    header: "Phần Trăm Giảm Giá",
     cell: ({ row }) => (
       <div className="capitalize ">{row.getValue("discount_percent")}</div>
     ),
   },
   {
     accessorKey: "status_label",
-    header: "Trạng thái",
+    header: "Trạng Thái",
     cell: ({ row }) => (
       <div className="capitalize">{row.getValue("status_label")}</div>
     ),
@@ -143,56 +152,73 @@ const createColumns = (
 },
 
 
-  {
-    id: "actions",
-    enableHiding: false,
-    header: "Hành động",
-    cell: ({ row }) => {
-      const disconut = row.original;
+ {
+  id: "actions",
+  enableHiding: false,
+  header: "Hành Động",
+  cell: ({ row }) => {
+    const discount = row.original;
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Hành động</DropdownMenuLabel>
 
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Hành động</DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => {
+              navigator.clipboard.writeText(discount.id.toString());
+              toast.success(`Đã sao chép ID ${discount.id}`);
+            }}
+          >
+            Sao chép ID
+          </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={() => {
-                navigator.clipboard.writeText(disconut.id.toString());
-                toast.success(
-                  `Đã sao chép ID ${disconut.id} rạp chiếu phim vào clipboard`
-                );
-              }}
-            >
-              Sao chép ID
-            </DropdownMenuItem>
+          <DropdownMenuSeparator />
 
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Link href={redirectConfig.discountUpdate(disconut.id)}>Sửa mã giảm giá</Link>
-            </DropdownMenuItem>
-             <DropdownMenuItem
-                          onSelect={() => {
-                          if (confirm("Bạn chắc chắn muốn xóa mã giảm giá này này?")) {
-                            deleteRoom(disconut.id);
-                          }
-                          }}
-                          disabled={isPending}
-                          className="text-red-500 focus:text-red-600"
-                        >
-                          {isPending ? "Đang xóa..." : "Xóa"}
-                        </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
+          {/* Sửa */}
+          <DropdownMenuItem>
+            <Link href={redirectConfig.discountUpdate(discount.id)}>
+              Sửa mã giảm giá
+            </Link>
+          </DropdownMenuItem>
+
+          {/* Vô hiệu hóa */}
+          <DropdownMenuItem
+                onSelect={() => {
+                    if (discount.status !== "active") {
+                    toast.error("Chỉ có thể vô hiệu hóa mã đang hoạt động.");
+                    return;
+                    }
+
+                    if (!confirm("Bạn có chắc muốn vô hiệu hóa mã này?")) return;
+
+                    disableDiscountFn(discount.id, {
+                    onSuccess: (res) => {
+                        toast.success(res?.message || "Đã vô hiệu hóa mã.");
+                        queryClient.invalidateQueries({ queryKey: ["getDiscount"], exact: false });
+                       
+                    },
+                    onError: () => {
+                        toast.error("Vô hiệu hóa thất bại!");
+                    },
+                    });
+                }}
+                disabled={isDisabling}
+                className="text-yellow-600 focus:text-yellow-700"
+                >
+                {isDisabling ? "Đang xử lý..." : "Vô hiệu hóa"}
+             </DropdownMenuItem>
+
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
   },
+},
 ];
 
 export function DisconutTable({
@@ -201,21 +227,34 @@ export function DisconutTable({
   lastPage,
   currentPage,
 }: RoomTableProps) {
+
   const router = useRouter();
-  const { mutate: deleteRoom, isPending } = useDeleteRoom();
-  
+  const queryClient = useQueryClient();
+  const { mutate: disableDiscountFn, isPending: isDisabling } = useDisableDiscount();
+
+  // ---- FILTER TRẠNG THÁI ----
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+
+ const filteredData = React.useMemo(() => {
+  if (statusFilter === "all") return data;
+
+  return data.filter((item) => item.status === statusFilter);
+}, [data, statusFilter]);
+
+
+  // ----------------------------
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const columns = React.useMemo(() => createColumns(router,deleteRoom,isPending), [router,deleteRoom,isPending]);
+  const columns = React.useMemo(
+    () => createColumns(router, disableDiscountFn, isDisabling, queryClient),
+    [router, disableDiscountFn, isDisabling, queryClient]
+  );
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -233,18 +272,24 @@ export function DisconutTable({
     },
   });
 
-  // logic phân trang
-  const handleNextPage = () => {
-    setPage((prevPage) => Math.min(prevPage + 1, lastPage));
-  };
-
-  const handlePreviousPage = () => {
-    setPage((prevPage) => Math.max(prevPage - 1, 1));
-  };
+  // Pagination
+  const handleNextPage = () => setPage((prev) => Math.min(prev + 1, lastPage));
+  const handlePreviousPage = () => setPage((prev) => Math.max(prev - 1, 1));
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      {/* Bộ lọc trạng thái */}
+      <div className="flex items-center gap-4 py-4">
+        <select
+          className="border rounded-md px-3 h-9"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">Tất cả</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="expired">Ngừng hoạt động</option>
+        </select>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -255,66 +300,51 @@ export function DisconutTable({
             {table
               .getAllColumns()
               .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id}
+                </DropdownMenuCheckboxItem>
+              ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Bảng */}
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   Không có dữ liệu.
                 </TableCell>
               </TableRow>
@@ -323,27 +353,27 @@ export function DisconutTable({
         </Table>
       </div>
 
+      {/* Pagination */}
       <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePreviousPage}
-            disabled={currentPage === 1}
-          >
-            Trang trước
-          </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePreviousPage}
+          disabled={currentPage === 1}
+        >
+          Trang trước
+        </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={currentPage === lastPage}
-          >
-            Trang sau
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleNextPage}
+          disabled={currentPage === lastPage}
+        >
+          Trang sau
+        </Button>
       </div>
     </div>
   );
 }
+

@@ -54,6 +54,14 @@ export interface DiscountUpdateResInterface {
   };
 }
 
+export interface DiscountDisableResInterface {
+  success: boolean;
+  message: string;
+}
+
+
+
+
 
 
 
