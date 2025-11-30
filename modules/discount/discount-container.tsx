@@ -13,6 +13,7 @@ import { useDiscounts } from "@/api/hooks/use-discount";
 
 const per_page = 10;
 export  function DiscountContainer() {
+  
   const [page, setPage] = useState<number>(1);
 
   const { data: discounts, isError, isLoading } = useDiscounts(
