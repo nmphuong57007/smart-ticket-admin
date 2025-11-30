@@ -10,6 +10,7 @@ import { useRenge } from "@/api/hooks/use-genre";
 import MovieUpdateForm from "./movie-update-form";
 
 export default function MovieUpdateContainer() {
+  
   const {data: rengeData} = useRenge();
   if (rengeData) console.log("rengeData:", rengeData);
   return (
