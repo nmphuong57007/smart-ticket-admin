@@ -37,20 +37,21 @@ import { redirectConfig } from "@/helpers/redirect-config";
 import Link from "next/link";
 import moment from "moment";
 import Image from "next/image";
-import { useDeleteBanner } from "@/api/hooks/use-banner-delete";
 import { ToggleBannerStatus } from "@/components/toggle-banner-status";
-import { useUpdateBanner } from "@/api/hooks/use-banner-update";
+import {  useDeletePromotion } from "@/api/hooks/use-post-delete";
+import { useUpdatePost } from "@/api/hooks/use-post-update";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 
 
-interface BannerTableProps {
-  data: BannerType["items"];
+interface PromotionTableProps {
+  data: PromotionType["items"];
   setPage: React.Dispatch<React.SetStateAction<number>>;
   lastPage: number;
   currentPage: number;
 }
 
-export type BannerType = {
+export type PromotionType = {
     items: {
             id: number;
             type: string;
@@ -69,13 +70,13 @@ export type BannerType = {
         }[];
 };
 
-type BannerItem = BannerType["items"][number];
+type BannerItem = PromotionType["items"][number];
 
 const createColumns = (
   router: ReturnType<typeof useRouter>,
-  deleteBanner: (id: number) => void,
+  useDeletePromotion: (id: number) => void,
   deletePending: boolean,
-  updateBanner: (
+  UpdatePost: (
     params: { id: number; data: FormData },
     options?: { onSuccess?: () => void; onError?: () => void }
   ) => void,
@@ -88,7 +89,7 @@ const createColumns = (
   },
     {
       accessorKey: "image",
-      header: "Ảnh Banner",
+      header: "Ảnh",
       cell: ({ row }) => (
         <div className="capitalize w-[130px] h-[80px] relative overflow-hidden">
           <Image
@@ -103,12 +104,28 @@ const createColumns = (
     },
   {
     accessorKey: "title",
-    header: "Thông Tin Banner",
+    header: "Thông Tin",
     cell: ({ row }) => (
     <div className="capitalize">{row.getValue("title")}</div>
     ),
   },
-
+ {
+    accessorKey: "description",
+    header: "Mô Tả",
+    cell: ({ row }) => (
+      <Tooltip>
+        <TooltipTrigger>
+          <div className="capitalize text-center line-clamp-1 w-48">
+            {row.getValue("description")}
+          </div>
+        </TooltipTrigger>
+      
+        <TooltipContent>
+          <p>{row.getValue("description")}</p>
+        </TooltipContent>
+      </Tooltip>
+    ),
+  },
 
 {
   accessorKey: "published_at",
@@ -144,8 +161,8 @@ const createColumns = (
       <ToggleBannerStatus
         id={item.id}
         value={item.is_published}
-         queryKey="getBanner"
-        updateFn={updateBanner}
+         queryKey="promoPosts"
+        updateFn={UpdatePost}
         isPending={updatePending}
       />
     );
@@ -157,7 +174,7 @@ const createColumns = (
     enableHiding: false,
     header: "Hành Động",
     cell: ({ row }) => {
-      const banner = row.original;
+      const post = row.original;
 
       return (
         <DropdownMenu>
@@ -173,9 +190,9 @@ const createColumns = (
 
             <DropdownMenuItem
               onClick={() => {
-                navigator.clipboard.writeText(banner.id.toString());
+                navigator.clipboard.writeText(post.id.toString());
                 toast.success(
-                  `Đã sao chép ID ${banner.id} rạp chiếu phim vào clipboard`
+                  `Đã sao chép ID ${post.id} rạp chiếu phim vào clipboard`
                 );
               }}
             >
@@ -184,12 +201,12 @@ const createColumns = (
 
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href={redirectConfig.pointUpdate(banner.id)}>Sửa banner</Link>
+              <Link href={redirectConfig.contentsUpdate(post.id)}>Sửa bài viết</Link>
             </DropdownMenuItem>
              <DropdownMenuItem
                           onSelect={() => {
-                          if (confirm("Bạn chắc chắn muốn xóa banner này?")) {
-                            deleteBanner(banner.id);
+                          if (confirm("Bạn chắc chắn muốn xóa bài viết này?")) {
+                            useDeletePromotion(post.id);
                           }
                           }}
                           disabled={deletePending}
@@ -204,16 +221,16 @@ const createColumns = (
   },
 ];
 
-export function BannerTable({
+export function PromotionTable({
   data,
   setPage,
   lastPage,
   currentPage,
   
-}: BannerTableProps) {
+}: PromotionTableProps) {
   const router = useRouter();
-  const { mutate: deleteBanner, isPending: deletePending } = useDeleteBanner();
-  const { mutate: updateBanner, isPending: updatePending } = useUpdateBanner();
+  const { mutate: deletePost, isPending: deletePending } = useDeletePromotion();
+  const { mutate: updatePost, isPending: updatePending } = useUpdatePost();
   
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -223,7 +240,7 @@ export function BannerTable({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const columns = React.useMemo(() => createColumns(router,deleteBanner,deletePending,updateBanner,updatePending), [router,deleteBanner,deletePending,updateBanner,updatePending]);
+  const columns = React.useMemo(() => createColumns(router,deletePost,deletePending,updatePost,updatePending), [router,deletePost,deletePending,updatePost,updatePending]);
 
   const table = useReactTable({
     data,

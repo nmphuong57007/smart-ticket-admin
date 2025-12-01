@@ -33,6 +33,8 @@ export const redirectConfig = {
   points: "/points",
   pointUpdate: (id: string | number) => `/points/${id}/update`,
   createBanner: "/points/create",
+  contentsUpdate: (id: string | number) => `/contents/${id}/update`,
   contents: "/contents",
+  createContents: "/contents/create",
   settings: "/settings",
 };
