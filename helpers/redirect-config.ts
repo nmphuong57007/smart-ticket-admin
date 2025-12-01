@@ -31,6 +31,8 @@ export const redirectConfig = {
   createDiscount: "/discounts/create",
   discountUpdate: (id: string | number) => `/discounts/${id}/update`,
   points: "/points",
+  pointUpdate: (id: string | number) => `/points/${id}/update`,
+  createBanner: "/points/create",
   contents: "/contents",
   settings: "/settings",
 };
