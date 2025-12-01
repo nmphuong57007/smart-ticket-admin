@@ -19,9 +19,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDownIcon } from "lucide-react";
-import { useBanners } from "@/api/hooks/use-banner";
-import { useUpdateBanner } from "@/api/hooks/use-banner-update";
 import { Switch } from "@/components/ui/switch";
+import { useUpdatePost } from "@/api/hooks/use-post-update";
+import { Textarea } from "@/components/ui/textarea";
+import { usePostDetail } from "@/api/hooks/use-hook-detail";
 
 // ========================
 // FORMAT FUNCTION
@@ -40,7 +41,10 @@ const formatDateTime = (date: Date) => {
 // ========================
 const formSchema = z
   .object({
+
     title: z.string().min(1, "Tiêu đề không được bỏ trống"),
+    description: z.string().min(1, "Nội dung không được bỏ trống"),
+    short_description: z.string().min(1, "Mô tả ngắn không được bỏ trống"),
     published_at: z.string().min(1, "Ngày phát hành không hợp lệ"),
     unpublished_at: z.string().min(1, "Ngày kết thúc không hợp lệ"),
     is_published: z.boolean(),
@@ -58,13 +62,15 @@ const formSchema = z
 // ========================
 // COMPONENT
 // ========================
-export default function BannerUpdateForm({ id }: { id: number }) {
+export default function PostUpdateForm({ id }: { id: number }) {
   const router = useRouter();
 
-  const { data: list, isLoading } = useBanners(9999, 1);
-  const { mutate: updateBanner, isPending } = useUpdateBanner();
 
-  const banner = list?.data?.items?.find((b) => b.id === id);
+  const { mutate: updatePost, isPending } = useUpdatePost();
+
+  const { data, isLoading } = usePostDetail(id);
+const post = data?.data; // single object
+
 
   // Date states
   const [openStart, setOpenStart] = useState(false);
@@ -77,34 +83,43 @@ export default function BannerUpdateForm({ id }: { id: number }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
+      description: "",
+      short_description: "",
       is_published: false,
       published_at: formatDateTime(new Date()),
       unpublished_at: formatDateTime(new Date()),
     },
   });
 
-  useEffect(() => {
-    if (banner && !isLoading) {
-      const pub = new Date(banner.published_at);
-      const unpub = new Date(banner.unpublished_at);
+useEffect(() => {
+  if (!post) return;
 
-      setStartDate(pub);
-      setEndDate(unpub);
+  const pub = new Date(post.published_at);
+  const unpub = new Date(post.unpublished_at);
 
-      form.reset({
-        title: banner.title,
-        is_published: banner.is_published,
-        published_at: formatDateTime(pub),
-        unpublished_at: formatDateTime(unpub),
-      });
-    }
-  }, [banner, isLoading, form]);
+  setStartDate(pub);
+  setEndDate(unpub);
+
+  form.reset({
+    title: post.title,
+    description: post.description,
+    short_description: post.short_description,
+    is_published: post.is_published,
+    published_at: formatDateTime(pub),
+    unpublished_at: formatDateTime(unpub),
+    image: "",
+  });
+
+}, [post, form]);
+
 
   // Submit
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const formData = new FormData();
 
     formData.append("title", data.title);
+    formData.append("description", data.description);
+    formData.append("short_description", data.short_description);
     formData.append("is_published", data.is_published ? "1" : "0");
     formData.append("published_at", data.published_at);
     formData.append("unpublished_at", data.unpublished_at);
@@ -113,11 +128,11 @@ export default function BannerUpdateForm({ id }: { id: number }) {
       formData.append("image", data.image[0]); // Backend expects image_file
     }
 
-    updateBanner(
+    updatePost(
       { id, data: formData },
       {
         onSuccess: () => {
-          toast.success("Cập nhật banner thành công!");
+          toast.success("Cập nhật bài viết thành công!");
           router.back();
         },
         onError: (error) => {
@@ -128,7 +143,7 @@ export default function BannerUpdateForm({ id }: { id: number }) {
     );
   };
 
-  if (isLoading || !banner)
+  if (isLoading || !post)
     return (
       <div className="flex justify-center my-10">
         <Spinner />
@@ -144,7 +159,7 @@ export default function BannerUpdateForm({ id }: { id: number }) {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Tiêu đề</FormLabel>
+              <FormLabel>Nội dung</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -165,6 +180,45 @@ export default function BannerUpdateForm({ id }: { id: number }) {
                   type="file"
                   accept="image/*"
                   onChange={(e) => field.onChange(e.target.files)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+            {/* description */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mô tả</FormLabel>
+              <FormControl>
+                <Textarea
+                  className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs"
+                  placeholder="Mô tả phim"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+            {/* short_description */}
+        <FormField
+          control={form.control}
+          name="short_description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mô tả ngắn</FormLabel>
+              <FormControl>
+                <Textarea
+                  className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs"
+                  placeholder="Mô tả ngắn"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
                 />
               </FormControl>
               <FormMessage />
@@ -258,7 +312,7 @@ export default function BannerUpdateForm({ id }: { id: number }) {
         />
 
         <Button className="w-full" type="submit" disabled={isPending}>
-          Cập nhật banner
+          Cập nhật bài viết
           {isPending && <Spinner />}
         </Button>
       </form>

@@ -2,35 +2,44 @@
 
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { useUpdateBanner } from "@/api/hooks/use-banner-update";
 import { useQueryClient } from "@tanstack/react-query";
 
-export default function ToggleBannerStatus({
-  id,
-  value,
-}: {
+interface ToggleStatusProps {
   id: number;
   value: boolean;
-}) {
-  const updateValue = value ? "0" : "1";
-  const { mutate: updateBanner, isPending } = useUpdateBanner();
+  queryKey: string; // "getBanner" | "getNews" | "getPromotion"
+  updateFn: (
+    params: {
+      id: number;
+      data: FormData;
+    },
+    options?: {
+      onSuccess?: () => void;
+      onError?: () => void;
+    }
+  ) => void;
+  isPending: boolean;
+}
 
-  const queryClient = useQueryClient(); // ⭐ Quan trọng
+export function ToggleBannerStatus({
+  id,
+  value,
+  queryKey,
+  updateFn,
+  isPending,
+}: ToggleStatusProps) {
+  const queryClient = useQueryClient();
 
-  const handleToggle = () => {
+  const handleToggle = (checked: boolean) => {
     const formData = new FormData();
-    formData.append("is_published", updateValue);
+    formData.append("is_published", checked ? "1" : "0");
 
-    updateBanner(
+    updateFn(
       { id, data: formData },
       {
         onSuccess: () => {
           toast.success("Đã cập nhật trạng thái!");
-
-          // ⭐ Cập nhật lại API banners
-          queryClient.invalidateQueries({
-            queryKey: ["getBanner"],
-          });
+          queryClient.invalidateQueries({ queryKey: [queryKey] });
         },
         onError: () => {
           toast.error("Cập nhật thất bại!");

@@ -28,18 +28,18 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDownIcon } from "lucide-react";
 
-import { useCreateBanner } from "@/api/hooks/use-banner-create";
-import { BannerCreateReqInterface } from "@/api/interfaces/banner-interface";
 import { useState } from "react";
 
 // ✔ Dùng Switch của shadcn
 import { Switch } from "@/components/ui/switch";
+import { useCreatePost } from "@/api/hooks/use-post-create";
+import { PostCreateReqInterface } from "@/api/interfaces/post-interface";
 
 // ------------------------
 // ZOD SCHEMA
 // ------------------------
 const formSchema = z.object({
-
+   type:   z.string().min(1, "Thể loại là bắt buộc"),
   title: z.string().min(1, "Tiêu đề là bắt buộc"),
 
   image: z
@@ -47,11 +47,12 @@ const formSchema = z.object({
       message: "Ảnh banner là bắt buộc",
     })
     .refine((file) => file instanceof File, "Vui lòng chọn một ảnh"),
+    description: z.string().min(1, "Mô tả là bắt buộc"),
+    short_description: z.string().min(1, "Mô tả là bắt buộc"),
+     published_at: z.string().min(1, "Ngày phát hành là bắt buộc"),
+    unpublished_at: z.string().min(1, "Ngày kết thúc là bắt buộc"),
 
-  published_at: z.string().min(1, "Ngày phát hành là bắt buộc"),
-  unpublished_at: z.string().min(1, "Ngày kết thúc là bắt buộc"),
-
-  is_published: z.boolean(),
+    is_published: z.boolean(),
 })
 .refine((data) => {
   if (!data.published_at || !data.unpublished_at) return true; // skip nếu chưa chọn
@@ -65,9 +66,9 @@ const formSchema = z.object({
 // ------------------------
 // COMPONENT
 // ------------------------
-export default function BannerCreateForm() {
+export default function PostCreateForm() {
   const router = useRouter();
-  const { mutate: createBanner, isPending: isCreating } = useCreateBanner();
+  const { mutate: createPost, isPending: isCreating } = useCreatePost();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [openEnd, setOpenEnd] = useState(false);
 
@@ -77,8 +78,11 @@ export default function BannerCreateForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+        type: "",
       title: "",
       image: null,
+      description: "",
+      short_description: "",
       published_at: "",
       unpublished_at: "",
       is_published: false,
@@ -88,8 +92,10 @@ export default function BannerCreateForm() {
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const formData = new FormData();
 
-    formData.append("type", "banner"); 
+    formData.append("type", data.type); 
     formData.append("title", data.title);
+    formData.append("description", data.description);
+    formData.append("short_description", data.short_description);
     formData.append("published_at", data.published_at);
     formData.append("unpublished_at", data.unpublished_at);
     formData.append("is_published", data.is_published ? "1" : "0");
@@ -98,13 +104,13 @@ export default function BannerCreateForm() {
       formData.append("image", data.image);
     }
 
-    createBanner(formData as unknown as BannerCreateReqInterface, {
+    createPost(formData as unknown as PostCreateReqInterface, {
       onSuccess: () => {
-        toast.success("Tạo banner thành công!");
-        router.push("/points"); // ✔ chuyển đúng trang
+        toast.success("Tạo tin tức thành công!");
+        router.push("/contents"); // ✔ chuyển đúng trang
       },
       onError: () => {
-        toast.error("Tạo banner thất bại!");
+        toast.error("Tạo tin tức thất bại!");
       },
     });
   };
@@ -112,6 +118,29 @@ export default function BannerCreateForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+           {/* type */}
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Thể loại</FormLabel>
+              <FormControl>
+                
+                 <select
+                  className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 text-sm shadow-xs"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                >
+                  <option value="">Chọn định dạng</option>
+                  <option value="news">Tin tức</option>
+                  <option value="promotion">Khuyến mãi</option>
+                </select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* TITLE */}
         <FormField
@@ -119,10 +148,10 @@ export default function BannerCreateForm() {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nội dung banner</FormLabel>
+              <FormLabel>Nội dung</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Nhập nội dung banner..."
+                  placeholder="Nhập nội dung ..."
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
                 />
@@ -132,13 +161,52 @@ export default function BannerCreateForm() {
           )}
         />
 
+                {/* description */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mô tả</FormLabel>
+              <FormControl>
+                <Textarea
+                  className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs"
+                  placeholder="Mô tả phim"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+            {/* short_description */}
+        <FormField
+          control={form.control}
+          name="short_description"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Mô tả ngắn</FormLabel>
+                <FormControl>
+                <Textarea
+                    className="file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs"
+                    placeholder="Mô tả ngắn"
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+
         {/* IMAGE */}
         <FormField
           control={form.control}
           name="image"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Ảnh Banner</FormLabel>
+              <FormLabel>Ảnh</FormLabel>
               <FormControl>
                 <Input
                   type="file"
@@ -254,7 +322,7 @@ export default function BannerCreateForm() {
         />
 
         <Button type="submit" className="w-full" disabled={isCreating}>
-          Tạo banner
+          Tạo bài viết
           {isCreating && <Spinner />}
         </Button>
       </form>
