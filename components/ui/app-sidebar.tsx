@@ -100,7 +100,7 @@ const data = {
       icon: Percent,
     },
     {
-      title: "Tích điểm",
+      title: "Banner",
       url: redirectConfig.points,
       icon: Gift,
     },
