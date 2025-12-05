@@ -81,7 +81,7 @@ const data = {
     },
     {
       title: "Quản lý Vé",
-      url: redirectConfig.tickets,
+      url: redirectConfig.bookings,
       icon: Ticket,
     },
     {
