@@ -81,7 +81,7 @@ const data = {
     },
     {
       title: "Quản lý Vé",
-      url: redirectConfig.tickets,
+      url: redirectConfig.bookings,
       icon: Ticket,
     },
     {
@@ -90,8 +90,8 @@ const data = {
       icon: Tag,
     },
     {
-      title: "Combo & Dịch vụ",
-      url: redirectConfig.combos,
+      title: "Sản phẩm & Dịch vụ",
+      url: redirectConfig.products,
       icon: ShoppingCart,
     },
     {

@@ -2,12 +2,22 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["placehold.co"],
+    unoptimized: true,
     dangerouslyAllowSVG: true,
-    // remotePatterns: [new URL('https://picsum.photos/**')],
-     remotePatterns: [
-      new URL('http://127.0.0.1:8000/storage/**'),
-
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "placehold.co",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "8000", // Backend Laravel
+      },
+      {
+        protocol: "https",
+        hostname: "your-api-domain.com",
+      },
     ],
   },
 };

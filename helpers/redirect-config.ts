@@ -14,19 +14,32 @@ export const redirectConfig = {
   movieStatic: "/movies/static",
   movieUpdate: (id: string | number) => `/movies/${id}/update`,
   rooms: "/rooms",
-  createRoom: "/rooms/create", 
+  createRoom: "/rooms/create",
   roomDetail: (id: string | number) => `/rooms/${id}/detail`,
   roomUpdate: (id: string | number) => `/rooms/${id}/update`,
-  roomStatic:"/rooms/static",
+  roomStatic: "/rooms/static",
   seats: "/seats",
   showtimes: "/showtimes",
-  createShowTime: "/showtimes/create", 
+  createShowTime: "/showtimes/create",
   showtimeDetail: (id: string | number) => `/showtimes/${id}/detail`,
   showtimeUpdate: (id: string | number) => `/showtimes/${id}/update`,
   showtimeStatic: "/showtimes/static",
-  tickets: "/tickets",
+
+
+  bookings: "/bookings",
+  bookingDetail: (id: string | number) => `/bookings/${id}/detail`,
+
+
   seatReservation: "/seat-reservation",
-  combos: "/combos",
+
+  // combos: "/combos",
+
+  products: "/products",
+  createProduct: "/products/create",
+
+  productDetail: (id: string | number) => `/products/${id}/detail`,
+  productUpdate: (id: string | number) => `/products/${id}/update`,
+
   discounts: "/discounts",
   createDiscount: "/discounts/create",
   discountUpdate: (id: string | number) => `/discounts/${id}/update`,
