@@ -35,7 +35,6 @@ import {
 import { toast } from "sonner";
 import { redirectConfig } from "@/helpers/redirect-config";
 import Link from "next/link";
-import moment from "moment";
 import { useDisableDiscount } from "@/api/hooks/use-discount-disable";
 import { DiscountDisableResInterface } from "@/api/interfaces/discount-interface";
 import { useQueryClient } from "@tanstack/react-query";
@@ -49,17 +48,26 @@ interface RoomTableProps {
 }
 
 export type DiscountType = {
-    id: number;
-    code: string;
-    discount_percent: number;
-    start_date: string;
-    end_date: string;
-    status: string;
-    status_label: string;
-    is_valid: boolean;
-    is_expired: boolean;
-    created_at: string;
-    updated_at: string;
+     id: number;
+        code: string;
+        type: string;
+        discount_percent: null;
+        discount_amount: number;
+        max_discount_amount: number;
+        usage_limit: number;
+        used_count: number;
+        remaining: number;
+        movie_id: number;
+        apply_for_all_movies: boolean;
+        min_order_amount: number;
+        start_date: string;
+        end_date: string;
+        status: string;
+        status_label: string;
+        is_valid: boolean;
+        is_expired: boolean;
+        created_at: string;
+        updated_at: string;
 };
 
 type DiscontItem = DiscountType[][number];
@@ -89,10 +97,38 @@ const createColumns = (
     ),
   },
   {
+    accessorKey: "type",
+    header: "Loại Mã",
+    cell: ({ row }) => (
+    <div className="capitalize">{row.getValue("type")}</div>
+    ),
+  },
+  {
+    accessorKey: "discount_amount",
+    header: "Số Tiền Giảm",
+    cell: ({ row }) => (
+      <div className="capitalize ">{row.getValue("discount_amount")}</div>
+    ),
+  },
+  {
     accessorKey: "discount_percent",
     header: "Phần Trăm Giảm Giá",
     cell: ({ row }) => (
       <div className="capitalize ">{row.getValue("discount_percent")}</div>
+    ),
+  },
+  {
+    accessorKey: "usage_limit",
+    header: "Số Lần Sử Dụng",
+    cell: ({ row }) => (
+      <div className="capitalize ">{row.getValue("usage_limit")}</div>
+    ),
+  },
+  {
+    accessorKey: "used_count",
+    header: "Đã Sử Dụng",
+    cell: ({ row }) => (
+      <div className="capitalize ">{row.getValue("used_count")}</div>
     ),
   },
   {
@@ -102,54 +138,31 @@ const createColumns = (
       <div className="capitalize">{row.getValue("status_label")}</div>
     ),
   },
-{
-  accessorKey: "start_date",
-  header: "Ngày Bắt Đầu",
-  cell: ({ row }) => {
-    const raw = row.getValue("start_date") as string | undefined;
-    return (
-      <div className="capitalize">
-        {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
-      </div>
-    );
-  },
-},
-{
-  accessorKey: "end_date",
-  header: "Ngày Kết Thúc",
-  cell: ({ row }) => {
-    const raw = row.getValue("end_date") as string | undefined;
-    return (
-      <div className="capitalize">
-        {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
-      </div>
-    );
-  },
-},
-{
-  accessorKey: "created_at",
-  header: "Ngày Tạo",
-  cell: ({ row }) => {
-    const raw = row.getValue("created_at") as string | undefined;
-    return (
-      <div className="capitalize">
-        {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
-      </div>
-    );
-  },
-},
-{
-  accessorKey: "updated_at",
-  header: "Ngày Sửa Gần Nhất",
-  cell: ({ row }) => {
-    const raw = row.getValue("updated_at") as string | undefined;
-    return (
-      <div className="capitalize">
-        {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
-      </div>
-    );
-  },
-},
+// {
+//   accessorKey: "start_date",
+//   header: "Ngày Bắt Đầu",
+//   cell: ({ row }) => {
+//     const raw = row.getValue("start_date") as string | undefined;
+//     return (
+//       <div className="capitalize">
+//         {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
+//       </div>
+//     );
+//   },
+// },
+// {
+//   accessorKey: "end_date",
+//   header: "Ngày Kết Thúc",
+//   cell: ({ row }) => {
+//     const raw = row.getValue("end_date") as string | undefined;
+//     return (
+//       <div className="capitalize">
+//         {raw ? moment(raw).format("DD-MM-YYYY") : "-"}
+//       </div>
+//     );
+//   },
+// },
+
 
 
  {

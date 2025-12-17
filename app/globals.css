@@ -145,3 +145,24 @@
     --sidebar-ring: oklch(0.439 0 0);
   }
 }
+
+
+/* ===== UI ===== */
+.preview-area {
+  min-height: 600px; /* chỉ dùng cho UI */
+}
+
+
+/* ================= PRINT ================= */
+
+
+
+
+
+
+
+
+
+
+
+

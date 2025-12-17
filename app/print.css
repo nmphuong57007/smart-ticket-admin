@@ -1,0 +1,63 @@
+/* ================= PRINT ================= */
+
+.print-area {
+  display: none;
+}
+
+@media print {
+
+  /* KHỔ GIẤY */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ẨN UI */
+  .no-print {
+    display: none !important;
+  }
+
+  /* HIỆN NỘI DUNG IN */
+  .print-area {
+    display: block;
+  }
+
+  /* MỖI TRANG IN */
+  .print-page {
+    break-before: page;
+    page-break-before: always;
+
+    width: 100vw;
+    height: 85vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* TRANG ĐẦU */
+  .print-page:first-child {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  /* KHÔNG IN BUTTON */
+  button {
+    display: none !important;
+  }
+
+  .ticket-page > * {
+  transform: scale(2);
+  }
+
+  .food-page > * {
+  transform: scale(1.8);
+  }
+}
+
+

@@ -1,26 +1,28 @@
 import instance from "@/lib/instance";
 
 import {
-  BookingResInterface,
   BookingDetailResInterface,
-  BookingDeleteResInterface
+  BookingDeleteResInterface,
+  BookingListResponse
 } from "../interfaces/booking-interface";
 export const getBookings = async (
   per_page?: number,
   page?: number,
   sort_by?: string,
   sort_order?: string,
-  search?: string
-): Promise<BookingResInterface> => {
+  booking_id?: number,
+  booking_code?: string,
+  qr_code?: string,
+  user_name?: string,
+  status?: string,
+): Promise<BookingListResponse> => {
   try {
-    const res = await instance.get<BookingResInterface>(
+    const res = await instance.get<BookingListResponse>(
       "/api/bookings/admin/list",
       {
-        params: { per_page, page, sort_by, sort_order, search },
+        params: { per_page, page, sort_by, sort_order, booking_id, booking_code, qr_code, user_name, status  },
       }
     );
-
-
     return res.data;
   } catch (err) {
     throw err;
@@ -42,42 +44,6 @@ export const getBookingDetail = async (
   }
 };
 
-// export const createMovie = async (data: MovieCreateReqInterface) => {
-//   try {
-//     const res = await instance.post<MovieDetailResInterface>(
-//       `/api/movies`,
-//       data,
-//       {
-//         headers: {
-//           "Content-Type": "multipart/form-data",
-//         },
-//       }
-//     );
-//     return res.data;
-//   } catch (err) {
-//     throw err;
-//   }
-// };
-
-// export const updateMovie = async (
-//   movie_id: number,
-//   data: FormData
-// ): Promise<MovieUpdateResInterface> => {
-//   try{
-//     const res = await instance.post<MovieUpdateResInterface>(
-//       `/api/movies/${movie_id}?_method=PUT`,
-//       data,
-//       {
-//         headers: {
-//           "Content-Type": "multipart/form-data",
-//         },
-//       }
-//     );
-//     return res.data;
-//   } catch (err){
-//     throw err;
-//   }
-// }
 
 
 export const deleteBooking = async (bookingId: number): Promise<BookingDeleteResInterface> => {
@@ -86,13 +52,3 @@ export const deleteBooking = async (bookingId: number): Promise<BookingDeleteRes
 };
 
 
-// export const getMovieStatic  = async (): Promise<MovieStaticReqInterface> => {
-//   try {
-//     const res = await instance.get<MovieStaticReqInterface>(
-//       `/api/movies/statistics`
-//     );
-//     return res.data;
-//   }catch (err) {
-//     throw err;
-//   }
-//   };

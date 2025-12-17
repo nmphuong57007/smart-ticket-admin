@@ -8,11 +8,15 @@ export const useBookings = (
   page?: number,
   sort_by?:string,
   sort_order?: string,
-  search?:string
+  booking_id?: number,
+  booking_code?: string,
+  qr_code?: string,
+  user_name?: string,
+  status?: string,
 ) => {
   return useQuery({
-    queryKey: ["getBookings", per_page, page,sort_by, sort_order,search],
-    queryFn: () => getBookings(per_page, page,sort_by, sort_order,search),
+    queryKey: ["getBookings", per_page, page,sort_by, sort_order, booking_id, booking_code, qr_code,user_name,status ],
+    queryFn: () => getBookings(per_page, page,sort_by, sort_order, booking_id, booking_code, qr_code,user_name, status ),
     enabled: hasToken(),
     ...queryOptions,
   });

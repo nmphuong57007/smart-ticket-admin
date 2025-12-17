@@ -19,12 +19,15 @@ export const redirectConfig = {
   roomUpdate: (id: string | number) => `/rooms/${id}/update`,
   roomStatic: "/rooms/static",
   seats: "/seats",
+  createGenre: "/seats/create",
+  genreUpdate: (id: string | number) => `/seats/${id}/update`,
   showtimes: "/showtimes",
   createShowTime: "/showtimes/create",
   showtimeDetail: (id: string | number) => `/showtimes/${id}/detail`,
   showtimeUpdate: (id: string | number) => `/showtimes/${id}/update`,
   showtimeStatic: "/showtimes/static",
 
+  print:  (id: string | number) => `/print/${id}`,
 
   bookings: "/bookings",
   bookingDetail: (id: string | number) => `/bookings/${id}/detail`,
