@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getDashboard } from "../services/dashboard-api";
-import { DashboardResponse } from "../interfaces/dashboard-interface";
+import { getDashboardStatistics } from "../services/dashboard-api";
+import { DashboardData, DashboardRange } from "../interfaces/dashboard-interface";
 
-export const useDashboardStatistics = (range = "7d") => {
-  const [data, setData] = useState<DashboardResponse["data"] | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export const useDashboardStatistics = (range: DashboardRange) => {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    getDashboard(range)
+    setIsLoading(true);
+
+    getDashboardStatistics(range)
       .then((res) => setData(res.data))
       .finally(() => setIsLoading(false));
   }, [range]);

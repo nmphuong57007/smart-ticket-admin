@@ -1,3 +1,5 @@
+export type DashboardRange = "today" | "7d" | "30d";
+
 export interface DashboardSummary {
   total_revenue: number;
   total_tickets: number;
@@ -13,9 +15,13 @@ export interface DashboardChartItem {
 export interface LatestBooking {
   id: number;
   booking_code: string;
-  customer_name: string;
-  created_at: string;
-  payment_status: "paid" | "pending";
+  customer_name: string | null;
+  movie: string | null;
+  room: string | null;
+  total_amount: number;
+  payment_status: "paid" | "pending" | "failed" | "refunded";
+  booking_status: string;
+  created_at: string | null;
 }
 
 export interface UpcomingShowtime {
@@ -24,16 +30,24 @@ export interface UpcomingShowtime {
   time: string;
   room: string;
   sold: number;
-  total: number;
+  capacity: number;
+  percent: number;
 }
 
-/* ✅ EXPORT ĐÚNG TÊN */
+export interface DashboardData {
+  summary: DashboardSummary;
+  chart: DashboardChartItem[];
+  latest_bookings: LatestBooking[];
+  upcoming_showtimes: UpcomingShowtime[];
+  meta: {
+    range: DashboardRange;
+    from: string;
+    to: string;
+  };
+}
+
 export interface DashboardResponse {
   success: boolean;
-  data: {
-    summary: DashboardSummary;
-    chart: DashboardChartItem[];
-    latest_bookings: LatestBooking[];
-    upcoming_showtimes: UpcomingShowtime[];
-  };
+  message: string;
+  data: DashboardData;
 }
