@@ -70,7 +70,7 @@ const data = {
       icon: MapPin,
     },
     {
-      title: "Ghế ngồi",
+      title: "Thể Loại",
       url: redirectConfig.seats,
       icon: PieChart,
     },
