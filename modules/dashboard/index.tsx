@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   LineChart,
   Line,
@@ -17,6 +17,8 @@ import { useDashboardStatistics } from "@/api/hooks/use-dashboard-statistics";
    TYPES
 ======================= */
 
+type RangeType = "today" | "7d" | "30d";
+
 interface Summary {
   total_revenue: number;
   total_tickets: number;
@@ -32,12 +34,8 @@ interface ChartItem {
 interface LatestBooking {
   id: number;
   booking_code: string;
-  customer_name: string;
-  movie: string;
-  room: string;
-  total_amount: number;
-  payment_status: "paid" | "pending";
-  booking_status: string;
+  customer_name: string | null;
+  payment_status: "paid" | "pending" | "failed" | "refunded";
   created_at: string;
 }
 
@@ -47,7 +45,7 @@ interface UpcomingShowtime {
   time: string;
   room: string;
   sold: number;
-  total: number;
+  capacity: number;
 }
 
 interface DashboardData {
@@ -62,42 +60,52 @@ interface DashboardData {
 ======================= */
 
 const DashboardStatistics: React.FC = () => {
-  const { data, isLoading } = useDashboardStatistics("7d");
+  /* RANGE STATE */
+  const [range, setRange] = useState<RangeType>("today");
+
+  /* CALL API */
+  const { data, isLoading } = useDashboardStatistics(range);
 
   if (isLoading || !data) {
     return (
-      <div className="w-full bg-white px-4 py-6 text-sm text-slate-500">
+      <div className="w-full rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
         Đang tải dữ liệu dashboard...
       </div>
     );
   }
 
-  const dashboardData = data as DashboardData;
+  const dashboard = data as DashboardData;
+
+  const rangeLabel: Record<RangeType, string> = {
+    today: "Hôm nay",
+    "7d": "7 ngày gần nhất",
+    "30d": "30 ngày gần nhất",
+  };
 
   const stats = [
     {
-      label: "Doanh thu hôm nay",
-      value: `${dashboardData.summary.total_revenue.toLocaleString("vi-VN")}₫`,
+      label: `Doanh thu ${rangeLabel[range]}`,
+      value: `${dashboard.summary.total_revenue.toLocaleString("vi-VN")} ₫`,
     },
     {
-      label: "Vé đã bán hôm nay",
-      value: `${dashboardData.summary.total_tickets} vé`,
+      label: `Vé đã bán ${rangeLabel[range]}`,
+      value: `${dashboard.summary.total_tickets} vé`,
     },
     {
-      label: "Suất chiếu hôm nay",
-      value: `${dashboardData.summary.total_showtimes} suất`,
+      label: `Suất chiếu ${rangeLabel[range]}`,
+      value: `${dashboard.summary.total_showtimes} suất`,
     },
     {
       label: "Phim đang chiếu",
-      value: `${dashboardData.summary.total_movies_showing} phim`,
+      value: `${dashboard.summary.total_movies_showing} phim`,
     },
   ];
 
   return (
-    <div className="w-full bg-white text-slate-900">
-      <section className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4">
+    <div className="w-full bg-slate-50 text-slate-900">
+      <section className="mx-auto max-w-[1400px] space-y-5 px-6 py-6">
         {/* HEADER */}
-        <header className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+        <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-xl font-semibold">Thống kê hệ thống</h1>
             <p className="mt-1 text-xs text-slate-500">
@@ -105,108 +113,130 @@ const DashboardStatistics: React.FC = () => {
             </p>
           </div>
 
-          <select className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-xs outline-none">
-            <option>Hôm nay</option>
-            <option>7 ngày gần nhất</option>
-            <option>30 ngày gần nhất</option>
+          <select
+            value={range}
+            onChange={(e) => setRange(e.target.value as RangeType)}
+            className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs outline-none"
+          >
+            <option value="today">Hôm nay</option>
+            <option value="7d">7 ngày gần nhất</option>
+            <option value="30d">30 ngày gần nhất</option>
           </select>
         </header>
 
-        {/* SUMMARY CARDS */}
-        <section className="grid gap-3 md:grid-cols-4">
+        {/* SUMMARY */}
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((item) => (
             <div
               key={item.label}
-              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
             >
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+              <p className="text-[11px] font-medium uppercase text-slate-500">
                 {item.label}
               </p>
-              <p className="mt-1 text-xl font-semibold text-slate-900">
-                {item.value}
-              </p>
+              <p className="mt-2 text-2xl font-semibold">{item.value}</p>
             </div>
           ))}
         </section>
 
-        {/* MAIN CONTENT */}
-        <section className="grid gap-4 md:grid-cols-3">
+        {/* MAIN */}
+        <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           {/* LEFT */}
-          <div className="space-y-4 md:col-span-2">
-            {/* REVENUE CHART */}
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="mb-2 flex items-center justify-between">
+          <div className="space-y-5 lg:col-span-2">
+            {/* CHART */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-sm font-semibold">
-                  Doanh thu 7 ngày gần nhất
+                  Doanh thu {rangeLabel[range]}
                 </h2>
-                <span className="text-[11px] text-slate-500">VNĐ</span>
+                <span className="text-xs text-slate-400">VNĐ</span>
               </div>
 
-              <div className="h-40 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dashboardData.chart}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                      dataKey="date"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value: number) =>
-                        `${value / 1_000_000}M`
-                      }
-                    />
-                    <Tooltip
-                      formatter={(value: number) =>
-                        `${value.toLocaleString("vi-VN")} ₫`
-                      }
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#4F46E5"
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart
+                  data={dashboard.chart}
+                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    stroke="#e5e7eb"
+                    strokeDasharray="4 4"
+                    vertical={false}
+                  />
+
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    fontSize={12}
+                    stroke="#94a3b8"
+                  />
+
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={10}
+                    fontSize={12}
+                    stroke="#94a3b8"
+                    tickFormatter={(v) => `${v / 1_000_000}M`}
+                    domain={[0, "dataMax + 1000000"]}
+                  />
+
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#fff",
+                      borderRadius: "12px",
+                      border: "1px solid #e5e7eb",
+                      fontSize: "12px",
+                    }}
+                    formatter={(v: number) =>
+                      `${v.toLocaleString("vi-VN")} ₫`
+                    }
+                    labelStyle={{ color: "#64748b" }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#4F46E5"
+                    strokeWidth={2.5}
+                    dot={{ r: 4, strokeWidth: 2, fill: "#fff" }}
+                    activeDot={{ r: 6, strokeWidth: 2, fill: "#fff" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
 
             {/* UPCOMING SHOWTIMES */}
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h2 className="mb-2 text-sm font-semibold">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-sm font-semibold">
                 Suất chiếu sắp diễn ra
               </h2>
 
-              {dashboardData.upcoming_showtimes.length === 0 ? (
+              {dashboard.upcoming_showtimes.length === 0 ? (
                 <p className="text-xs text-slate-500">
                   Không có suất chiếu sắp tới
                 </p>
               ) : (
-                <table className="w-full text-left text-[11px]">
+                <table className="w-full text-[12px]">
                   <thead className="border-b text-slate-500">
                     <tr>
-                      <th>Phim</th>
+                      <th className="py-2">Phim</th>
                       <th>Ngày</th>
                       <th>Giờ</th>
                       <th>Phòng</th>
                       <th className="text-right">Đã bán</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
-                    {dashboardData.upcoming_showtimes.map((show) => (
-                      <tr key={`${show.movie}-${show.time}`}>
-                        <td className="font-medium">{show.movie}</td>
-                        <td>{show.date}</td>
-                        <td>{show.time}</td>
-                        <td>{show.room}</td>
+                  <tbody>
+                    {dashboard.upcoming_showtimes.map((s) => (
+                      <tr key={`${s.movie}-${s.time}`} className="border-b">
+                        <td className="py-2 font-medium">{s.movie}</td>
+                        <td>{s.date}</td>
+                        <td>{s.time}</td>
+                        <td>{s.room}</td>
                         <td className="text-right">
-                          {show.sold}/{show.total}
+                          {s.sold}/{s.capacity}
                         </td>
                       </tr>
                     ))}
@@ -217,23 +247,19 @@ const DashboardStatistics: React.FC = () => {
           </div>
 
           {/* RIGHT */}
-          <div className="space-y-4">
-            {/* PAYMENT METHOD */}
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h2 className="mb-2 text-sm font-semibold">
-                Phương thức thanh toán
-              </h2>
-              <ul className="space-y-1 text-[11px]">
-                <li> VNPay: 100%</li>
-              </ul>
+          <div className="space-y-5">
+            {/* PAYMENT */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-sm font-semibold">Phương thức thanh toán</h2>
+              <p className="mt-2 text-xs text-slate-500">VNPay: 100%</p>
             </div>
 
             {/* LATEST BOOKINGS */}
-            <div className="h-[260px] rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h2 className="mb-2 text-sm font-semibold">Đơn vé mới nhất</h2>
+            <div className="h-[280px] rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-sm font-semibold">Đơn vé mới nhất</h2>
 
               <div className="h-full overflow-y-auto">
-                <table className="w-full text-left text-[11px]">
+                <table className="w-full text-[12px]">
                   <thead className="border-b text-slate-500">
                     <tr>
                       <th>Mã</th>
@@ -242,22 +268,22 @@ const DashboardStatistics: React.FC = () => {
                       <th>Trạng thái</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
-                    {dashboardData.latest_bookings.map((bk) => (
-                      <tr key={bk.id}>
-                        <td>{bk.booking_code}</td>
-                        <td>{bk.customer_name}</td>
-                        <td>{bk.created_at.slice(11, 16)}</td>
+                  <tbody>
+                    {dashboard.latest_bookings.map((b) => (
+                      <tr key={b.id} className="border-b">
+                        <td className="py-2">{b.booking_code}</td>
+                        <td>{b.customer_name ?? "---"}</td>
+                        <td>{b.created_at.slice(11, 16)}</td>
                         <td>
                           <span
                             className={`rounded-full px-2 py-[2px] text-[10px]
                               ${
-                                bk.payment_status === "paid"
+                                b.payment_status === "paid"
                                   ? "bg-emerald-50 text-emerald-700"
                                   : "bg-amber-50 text-amber-700"
                               }`}
                           >
-                            {bk.payment_status === "paid"
+                            {b.payment_status === "paid"
                               ? "Đã thanh toán"
                               : "Chờ thanh toán"}
                           </span>
