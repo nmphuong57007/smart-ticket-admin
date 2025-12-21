@@ -1,12 +1,19 @@
 import instance from "@/lib/instance";
-import { DashboardResponse } from "../interfaces/dashboard-interface";
+import { DashboardData, DashboardQuery } from "../interfaces/dashboard-interface";
+
+interface DashboardApiResponse {
+  success: boolean;
+  message: string;
+  data: DashboardData;
+}
 
 export const getDashboardStatistics = async (
-  range: "today" | "7d" | "30d"
-): Promise<DashboardResponse> => {
-  const res = await instance.get<DashboardResponse>("/api/dashboard", {
-    params: { range },
-  });
+  params: DashboardQuery
+): Promise<DashboardData> => {
+  const res = await instance.get<DashboardApiResponse>(
+    "/api/dashboard",
+    { params }
+  );
 
-  return res.data;
+  return res.data.data;
 };

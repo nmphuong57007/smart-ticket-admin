@@ -12,42 +12,49 @@ export interface DashboardChartItem {
   revenue: number;
 }
 
-export interface LatestBooking {
+export interface DashboardLatestBooking {
   id: number;
   booking_code: string;
-  customer_name: string | null;
-  movie: string | null;
-  room: string | null;
-  total_amount: number;
-  payment_status: "paid" | "pending" | "failed" | "refunded";
-  booking_status: string;
+  customer_name: string;
+  payment_status: "paid" | "pending";
   created_at: string | null;
 }
 
-export interface UpcomingShowtime {
+export interface DashboardUpcomingShowtime {
   movie: string;
   date: string;
   time: string;
   room: string;
   sold: number;
   capacity: number;
-  percent: number;
+}
+
+export interface DashboardMovieStatistic {
+  movie_id: number;
+  movie: string;
+  total_showtimes: number;
+  total_seats: number;
+  sold_tickets: number;
+  empty_seats: number;
+  revenue: number;
+  fill_percent: number;
 }
 
 export interface DashboardData {
   summary: DashboardSummary;
   chart: DashboardChartItem[];
-  latest_bookings: LatestBooking[];
-  upcoming_showtimes: UpcomingShowtime[];
+  latest_bookings: DashboardLatestBooking[];
+  upcoming_showtimes: DashboardUpcomingShowtime[];
+  movies_statistics: DashboardMovieStatistic[];
   meta: {
-    range: DashboardRange;
+    range: string;
     from: string;
     to: string;
   };
 }
 
-export interface DashboardResponse {
-  success: boolean;
-  message: string;
-  data: DashboardData;
+export interface DashboardQuery {
+  range?: DashboardRange;
+  from_date?: string;
+  to_date?: string;
 }
