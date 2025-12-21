@@ -46,6 +46,7 @@ export interface CheckinSeat {
   seat_id?: number | string;
   seat_code: string;
   type?: string;
+  price?: string;
 }
 
 export interface CheckinProduct {

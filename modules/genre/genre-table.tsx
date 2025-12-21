@@ -31,11 +31,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { redirectConfig } from "@/helpers/redirect-config";
 import Link from "next/link";
-import { useDeleteRoom } from "@/api/hooks/use-room-delete";
 import moment from "moment";
+import { useDeleteGenre } from "@/api/hooks/use-genre-delete";
 
 
 interface GenreTableProps {
@@ -56,7 +56,7 @@ type RoomItem = GenreType["data"][number];
 
 const createColumns = (
   router: ReturnType<typeof useRouter>,
-  deleteRoom: (id: number) => void,
+  deleteGenre: (id: number) => void,
   isPending: boolean
 ): ColumnDef<RoomItem>[] => [
   {
@@ -116,7 +116,7 @@ const createColumns = (
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Hành động</DropdownMenuLabel>
 
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               onClick={() => {
                 navigator.clipboard.writeText(genre.id.toString());
                 toast.success(
@@ -125,7 +125,7 @@ const createColumns = (
               }}
             >
               Sao chép ID
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
 
             <DropdownMenuSeparator />
             <DropdownMenuItem>
@@ -134,7 +134,7 @@ const createColumns = (
              <DropdownMenuItem
                           onSelect={() => {
                           if (confirm("Bạn chắc chắn muốn xóa thể loại phim này?")) {
-                            deleteRoom(genre.id);
+                            deleteGenre(genre.id);
                           }
                           }}
                           disabled={isPending}
@@ -153,7 +153,7 @@ export function GenreTable({
   data,
 }: GenreTableProps) {
   const router = useRouter();
-  const { mutate: deleteRoom, isPending } = useDeleteRoom();
+  const { mutate: deleteGenre, isPending } = useDeleteGenre();
   
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -163,7 +163,7 @@ export function GenreTable({
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
-  const columns = React.useMemo(() => createColumns(router,deleteRoom,isPending), [router,deleteRoom,isPending]);
+  const columns = React.useMemo(() => createColumns(router,deleteGenre,isPending), [router,deleteGenre,isPending]);
 
   const table = useReactTable({
     data,

@@ -21,14 +21,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// 🧩 HOOK API – NHỚ ĐỔI LẠI PATH NẾU KHÁC DỰ ÁN CỦA BẠN
+
 import { useRenge } from "@/api/hooks/use-genre"; // hook load list genre
 import { useUpdateGenre } from "@/api/hooks/use-genre-update"; // hook cập nhật genre
 
 // Nếu bạn có interface riêng cho request thì dùng, còn không có thể bỏ phần này
 export interface GenreUpdateReqInterface {
   name?: string;
-  is_active?: boolean;
+  // is_active?: boolean;
 }
 
 // Zod schema cho form
@@ -39,7 +39,7 @@ export const formSchema = z.object({
     .max(100, "Tên thể loại tối đa 100 ký tự"),
 
   // Dùng status dạng string cho dễ bind với <select>
-  status: z.enum(["active", "inactive"]),
+  // status: z.enum(["active", "inactive"]),
 });
 
 export default function GenreUpdateForm({ id }: { id: number }) {
@@ -56,7 +56,7 @@ export default function GenreUpdateForm({ id }: { id: number }) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      status: "active",
+      // status: "active",
     },
   });
 
@@ -65,7 +65,7 @@ export default function GenreUpdateForm({ id }: { id: number }) {
     if (genre && !isLoading) {
       form.reset({
         name: genre.name,
-        status: genre.is_active ? "active" : "inactive",
+        // status: genre.is_active ? "active" : "inactive",
       });
     }
   }, [genre, isLoading, form]);
@@ -74,7 +74,7 @@ export default function GenreUpdateForm({ id }: { id: number }) {
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const payload: GenreUpdateReqInterface = {
       name: data.name,
-      is_active: data.status === "active",
+      // is_active: data.status === "active",
     };
 
     updateGenre(
@@ -120,7 +120,7 @@ export default function GenreUpdateForm({ id }: { id: number }) {
         />
 
         {/* STATUS */}
-        <FormField
+        {/* <FormField 
           control={form.control}
           name="status"
           render={({ field }) => (
@@ -138,7 +138,7 @@ export default function GenreUpdateForm({ id }: { id: number }) {
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
 
         {/* SUBMIT */}
         <Button type="submit" className="w-full" disabled={isPending}>

@@ -8,3 +8,8 @@ export interface GenreResInterface {
         updated_at: string;
     }[];
 }
+
+export interface GenreDeleteResInterface{
+   success: boolean;
+    message: string;
+}
