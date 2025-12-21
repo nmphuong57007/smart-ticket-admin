@@ -6,14 +6,13 @@ import {
   FileText,
   Film,
   GalleryVerticalEnd,
-  Gift,
   Home,
   MapPin,
+  MessageSquareMoreIcon,
   Percent,
   PieChart,
   Settings2,
   ShoppingCart,
-  Tag,
   Ticket,
   Users,
 } from "lucide-react";
@@ -80,14 +79,14 @@ const data = {
       icon: Calendar,
     },
     {
-      title: "Quản lý Vé",
+      title: "Quản lý đơn vé",
       url: redirectConfig.bookings,
       icon: Ticket,
     },
     {
-      title: "Đặt chỗ",
-      url: redirectConfig.seatReservation,
-      icon: Tag,
+      title: "Quản lý đánh giá & bình luận",
+      url: redirectConfig.comment,
+      icon: MessageSquareMoreIcon,
     },
     {
       title: "Sản phẩm & Dịch vụ",
@@ -99,11 +98,11 @@ const data = {
       url: redirectConfig.discounts,
       icon: Percent,
     },
-    {
-      title: "Banner",
-      url: redirectConfig.points,
-      icon: Gift,
-    },
+    // {
+    //   title: "Banner",
+    //   url: redirectConfig.points,
+    //   icon: Gift,
+    // },
     {
       title: "Nội dung",
       url: redirectConfig.contents,
