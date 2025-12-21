@@ -79,7 +79,7 @@ export interface ShowTimeCreatePayload {
   room_id: number;
   show_date: string;
   show_time: string;
-  end_time: string;
+  // end_time: string;
   language_type: string;
  
 }
@@ -161,18 +161,31 @@ export interface ShowTimeDeleteResInterface{
 }
 
 
-export interface ConflictResponse {
-  success: boolean;
-  message: string;
-  conflict: {
-    existing_showtime_id: number;
-    room_id: number;
-    existing_movie: string;
-    existing_start: string;
-    existing_end: string;
-    required_next_start: string;
-  };
+
+
+export interface TimeRangeConflict {
+  error: string;
 }
+
+export interface ShowtimeOverlapConflict {
+  existing_showtime_id: number;
+  room_id: number;
+  existing_movie: string;
+  existing_start: string;
+  existing_end: string;
+  required_next_start: string;
+}
+
+export type ShowtimeConflict =
+  | TimeRangeConflict
+  | ShowtimeOverlapConflict;
+
+export interface ConflictResponse {
+  success: false;
+  message: string;
+  conflict?: ShowtimeConflict;
+}
+
 
 // Thống kê tổng
 export interface ShowtimeStatisticsAll {

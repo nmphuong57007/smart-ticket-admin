@@ -20,6 +20,7 @@ export function SeatTicketPrint({ data }: Props) {
         <p><b>Phim:</b> {data.showtime.movie.title}</p>
         <p><b>Suất:</b> {data.showtime.date} {data.showtime.time}</p>
         <p><b>Ghế:</b> {seat.seat_code}</p>
+        <p><b>Giá:</b> {seat.price} VNĐ</p>
         <p><b>Mã đơn:</b> {data.booking.booking_code}</p>
       </div>
 

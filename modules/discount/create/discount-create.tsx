@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -29,6 +29,7 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { useCreateDiscount } from "@/api/hooks/use-discount-create";
 import { redirectConfig } from "@/helpers/redirect-config";
+import instance from "@/lib/instance";
 
 // ============================
 // ZOD SCHEMA
@@ -57,10 +58,13 @@ export const formSchema = z
       .refine((v) => Number(v) > 0, "Số lượt sử dụng phải > 0"),
 
     movie_id: z
-      .string()
-      .min(1, "ID phim là bắt buộc")
-      .refine((v) => !isNaN(Number(v)), "ID phim phải là số")
-      .refine((v) => Number(v) > 0, "ID phim phải > 0"),
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || (!isNaN(Number(v)) && Number(v) > 0),
+      "Phim áp dụng không hợp lệ"
+    ),
+
 
     min_order_amount: z
       .string()
@@ -155,6 +159,22 @@ export default function DiscountCreateForm() {
   const today = new Date();
   const formatDate = (date: Date) => date.toLocaleDateString("en-CA"); // yyyy-mm-dd
 
+  const [movies, setMovies] = useState<
+    {
+      id: number;
+      title: string;
+      duration: number;
+      status: string;
+    }[]
+  >([]);
+
+    useEffect(() => {
+     instance.get("/api/movies/list?per_page=100").then((res) => {
+    console.log("MOVIES API:", res.data);
+    setMovies(res.data.data.movies); // ✔ LẤY ĐÚNG MẢNG
+  });
+  }, []);
+
   // Form setup
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -200,7 +220,7 @@ export default function DiscountCreateForm() {
         ? Number(data.max_discount_amount)
         : undefined,
       usage_limit: Number(data.usage_limit),
-      movie_id: Number(data.movie_id),
+      movie_id: data.movie_id ? Number(data.movie_id) : null,
       min_order_amount: Number(data.min_order_amount),
       start_date: data.start_date,
       end_date: data.end_date,
@@ -343,14 +363,32 @@ export default function DiscountCreateForm() {
             name="movie_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ID phim áp dụng</FormLabel>
+                <FormLabel>Phim áp dụng (tuỳ chọn)</FormLabel>
                 <FormControl>
-                  <Input type="number" min={1} placeholder="VD: 2" {...field} />
+                  <select
+                    name={field.name}
+                    value={field.value?.toString() ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    className="h-9 w-full border rounded-md px-3 bg-background"
+                  >
+                    <option value="">Tất cả phim</option>
+
+                    {movies
+                      .filter((m) => m.status !== "stopped") // loại phim đã dừng chiếu
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.title} ({m.duration} phút)
+                        </option>
+                      ))}
+                  </select>
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+
 
           <FormField
             control={form.control}

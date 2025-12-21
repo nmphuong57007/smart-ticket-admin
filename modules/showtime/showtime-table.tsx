@@ -40,10 +40,18 @@ import { useDeleteShowTime } from "@/api/hooks/use-showtime-delete";
 
 interface ShowTimeTableProps {
   data: ShowTimeType["items"];
+  rooms: {
+    id: number;
+    name: string;
+  }[];
+  roomId: number | null;
+  setRoomId: React.Dispatch<React.SetStateAction<number | null>>;
+
   setPage: React.Dispatch<React.SetStateAction<number>>;
   lastPage: number;
   currentPage: number;
 }
+
 
 export type ShowTimeType = {
    items: {
@@ -213,13 +221,16 @@ const createColumns = (
   },
 ];
 
-
 export function ShowTimeTable({
   data,
+  rooms,
+  roomId,
+  setRoomId,
   setPage,
   lastPage,
   currentPage,
 }: ShowTimeTableProps) {
+
   const router = useRouter();
   const { mutate: deleteShowTime, isPending } = useDeleteShowTime();
   
@@ -232,6 +243,7 @@ export function ShowTimeTable({
   const [rowSelection, setRowSelection] = React.useState({});
 
   const columns = React.useMemo(() => createColumns(router,deleteShowTime,isPending), [router,deleteShowTime,isPending]);
+
 
   const table = useReactTable({
     data,
@@ -263,7 +275,25 @@ export function ShowTimeTable({
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
+      {/* FILTER */}
+      <div className="flex items-center gap-4 py-4">
+        <select
+          className="border rounded-md px-3 py-2 text-sm"
+          value={roomId ?? ""}
+          onChange={(e) => {
+            const v = e.target.value;
+            setRoomId(v ? Number(v) : null);
+            setPage(1);
+          }}
+        >
+          <option value="">Tất cả phòng</option>
+          {rooms.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
+          ))}
+        </select>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">

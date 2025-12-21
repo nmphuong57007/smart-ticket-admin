@@ -38,7 +38,7 @@ export interface DisconutCreateReqInterface {
     discount_amount: number | undefined;
     max_discount_amount: number | undefined;
     usage_limit: number;
-    movie_id: number;
+    movie_id: number | null;
     min_order_amount: number;
     start_date: string;
     end_date: string;

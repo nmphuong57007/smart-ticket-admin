@@ -9,19 +9,21 @@ import { Spinner } from "@/components/ui/spinner";
 import { redirectConfig } from "@/helpers/redirect-config";
 import { ShowTimeTable } from "./showtime-table";
 import { useShowTimes } from "@/api/hooks/use-showtime";
+import { useRooms } from "@/api/hooks/use-room";
 
 
 const per_page = 10;
 export  function ShowTimeContainer() {
   const [page, setPage] = useState<number>(1);
-
-
+  const [roomId, setRoomId] = useState<number | null>(null);
   const { data: showtimes, isError, isLoading } = useShowTimes(
     per_page, 
     page, 
     "id",
     "desc",
+    roomId || undefined,
   );
+  const { data: roomsData } = useRooms();
 
   if (isError) toast.error("Đã có lỗi xảy ra khi tải danh sách phòng chiếu.");
 
@@ -47,6 +49,9 @@ export  function ShowTimeContainer() {
         showtimes && (
           <ShowTimeTable
             data={showtimes.data.items}
+            rooms={roomsData?.data.items || []}
+            roomId={roomId}
+            setRoomId={setRoomId}
             setPage={setPage}
             lastPage={lastPage}
             currentPage={page}

@@ -1,6 +1,6 @@
 
 import instance from "@/lib/instance";
-import { GenreResInterface } from "../interfaces/genre-interface";
+import { GenreDeleteResInterface, GenreResInterface } from "../interfaces/genre-interface";
 import { GenreCreateReqInterface } from "../interfaces/genre-interface.";
 
 export const getRenge = async (): Promise<GenreResInterface> => {
@@ -31,5 +31,10 @@ export const updateGenre = async (
   payload: { name?: string; is_active?: boolean }
 ) => {
   const res = await instance.put(`/api/genres/${id}`, payload);
+  return res.data;
+};
+
+export const deleteGenre = async (genreId: number): Promise<GenreDeleteResInterface> => {
+  const res = await instance.delete<GenreDeleteResInterface>(`/api/genres/${genreId}`);
   return res.data;
 };
