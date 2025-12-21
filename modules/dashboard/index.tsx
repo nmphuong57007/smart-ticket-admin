@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   LineChart,
   Line,
@@ -10,269 +11,424 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
+import { toast } from "sonner";
 
 import { useDashboardStatistics } from "@/api/hooks/use-dashboard-statistics";
+import {
+  DashboardRange,
+  DashboardMovieStatistic,
+} from "@/api/interfaces/dashboard-interface";
 
 /* =======================
    TYPES
 ======================= */
 
-interface Summary {
-  total_revenue: number;
-  total_tickets: number;
-  total_showtimes: number;
-  total_movies_showing: number;
-}
+type PresetType = "today" | "7d" | "30d" | "custom";
 
-interface ChartItem {
-  date: string;
-  revenue: number;
-}
+/* =======================
+   HELPERS
+======================= */
 
-interface LatestBooking {
-  id: number;
-  booking_code: string;
-  customer_name: string;
-  movie: string;
-  room: string;
-  total_amount: number;
-  payment_status: "paid" | "pending";
-  booking_status: string;
-  created_at: string;
-}
-
-interface UpcomingShowtime {
-  movie: string;
-  date: string;
-  time: string;
-  room: string;
-  sold: number;
-  total: number;
-}
-
-interface DashboardData {
-  summary: Summary;
-  chart: ChartItem[];
-  latest_bookings: LatestBooking[];
-  upcoming_showtimes: UpcomingShowtime[];
-}
+const getMoviePerformance = (fillPercent: number) => {
+  if (fillPercent >= 70) return { label: "Bán chạy", color: "green" };
+  if (fillPercent >= 40) return { label: "Trung bình", color: "yellow" };
+  return { label: "Ít người xem", color: "red" };
+};
 
 /* =======================
    COMPONENT
 ======================= */
 
-const DashboardStatistics: React.FC = () => {
-  const { data, isLoading } = useDashboardStatistics("7d");
+const DashboardStatistics = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  /* =======================
+     INIT STATE FROM URL
+  ======================= */
+
+  const initialPreset =
+    (searchParams.get("preset") as PresetType) ?? "7d";
+
+  const [preset, setPreset] = useState<PresetType>(initialPreset);
+  const [range, setRange] = useState<DashboardRange>(
+    initialPreset !== "custom" ? initialPreset : "7d"
+  );
+
+  const [fromDate, setFromDate] = useState<string | undefined>(
+    searchParams.get("from") ?? undefined
+  );
+  const [toDate, setToDate] = useState<string | undefined>(
+    searchParams.get("to") ?? undefined
+  );
+
+  /* =======================
+     VALIDATE DATE
+  ======================= */
+
+  const isDateValid = useMemo(() => {
+    if (!fromDate || !toDate) return true;
+    return new Date(fromDate) <= new Date(toDate);
+  }, [fromDate, toDate]);
+
+  useEffect(() => {
+    if (!isDateValid) {
+      toast.error("Ngày bắt đầu không được lớn hơn ngày kết thúc");
+    }
+  }, [isDateValid]);
+
+  /* =======================
+     SYNC URL (NO RELOAD)
+  ======================= */
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    params.set("preset", preset);
+
+    if (preset === "custom") {
+      if (fromDate) params.set("from", fromDate);
+      if (toDate) params.set("to", toDate);
+    }
+
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [preset, fromDate, toDate, router]);
+
+  /* =======================
+     CALL API (SAFE)
+  ======================= */
+
+  const shouldFetch =
+    preset !== "custom" || (fromDate && toDate && isDateValid);
+
+  const { data, isLoading } = useDashboardStatistics(
+    shouldFetch
+      ? {
+          range: preset === "custom" ? undefined : range,
+          from_date: preset === "custom" ? fromDate : undefined,
+          to_date: preset === "custom" ? toDate : undefined,
+        }
+      : {}
+  );
 
   if (isLoading || !data) {
     return (
-      <div className="w-full bg-white px-4 py-6 text-sm text-slate-500">
+      <div className="rounded-xl border bg-white p-6 text-sm text-slate-500">
         Đang tải dữ liệu dashboard...
       </div>
     );
   }
 
-  const dashboardData = data as DashboardData;
+  const {
+    summary,
+    chart,
+    latest_bookings,
+    upcoming_showtimes,
+    movies_statistics,
+  } = data;
 
-  const stats = [
-    {
-      label: "Doanh thu hôm nay",
-      value: `${dashboardData.summary.total_revenue.toLocaleString("vi-VN")}₫`,
-    },
-    {
-      label: "Vé đã bán hôm nay",
-      value: `${dashboardData.summary.total_tickets} vé`,
-    },
-    {
-      label: "Suất chiếu hôm nay",
-      value: `${dashboardData.summary.total_showtimes} suất`,
-    },
-    {
-      label: "Phim đang chiếu",
-      value: `${dashboardData.summary.total_movies_showing} phim`,
-    },
-  ];
+  const presetLabel: Record<PresetType, string> = {
+    today: "Hôm nay",
+    "7d": "7 ngày gần nhất",
+    "30d": "30 ngày gần nhất",
+    custom: "Tùy chọn",
+  };
+
+  const filterDescription =
+    preset === "custom" && fromDate && toDate
+      ? `Từ ${fromDate} → ${toDate}`
+      : presetLabel[preset];
+
+  const handlePresetChange = (value: PresetType) => {
+    setPreset(value);
+
+    if (value !== "custom") {
+      setRange(value);
+      setFromDate(undefined);
+      setToDate(undefined);
+    }
+  };
 
   return (
-    <div className="w-full bg-white text-slate-900">
-      <section className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4">
-        {/* HEADER */}
-        <header className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+    <div className="min-h-screen bg-slate-50 px-6 py-6 text-slate-900">
+      <div className="mx-auto max-w-[1280px] space-y-6">
+        {/* ================= HEADER ================= */}
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold">Thống kê hệ thống</h1>
-            <p className="mt-1 text-xs text-slate-500">
+            <h1 className="text-lg font-semibold">Thống kê hệ thống</h1>
+            <p className="text-xs text-slate-500">
               Tổng quan hoạt động rạp chiếu phim SmartTicket
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Đang xem dữ liệu:{" "}
+              <span className="rounded-full bg-indigo-50 px-2 py-[2px] text-indigo-600">
+                {filterDescription}
+              </span>
             </p>
           </div>
 
-          <select className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-xs outline-none">
-            <option>Hôm nay</option>
-            <option>7 ngày gần nhất</option>
-            <option>30 ngày gần nhất</option>
-          </select>
-        </header>
-
-        {/* SUMMARY CARDS */}
-        <section className="grid gap-3 md:grid-cols-4">
-          {stats.map((item) => (
-            <div
-              key={item.label}
-              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+          {/* FILTER */}
+          <div className="flex items-center gap-2">
+            <select
+              value={preset}
+              onChange={(e) =>
+                handlePresetChange(e.target.value as PresetType)
+              }
+              className="rounded-lg border bg-white px-3 py-1.5 text-sm shadow-sm"
             >
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                {item.label}
-              </p>
-              <p className="mt-1 text-xl font-semibold text-slate-900">
-                {item.value}
-              </p>
-            </div>
-          ))}
-        </section>
+              <option value="today">Hôm nay</option>
+              <option value="7d">7 ngày</option>
+              <option value="30d">30 ngày</option>
+              <option value="custom">Tùy chọn</option>
+            </select>
 
-        {/* MAIN CONTENT */}
-        <section className="grid gap-4 md:grid-cols-3">
-          {/* LEFT */}
-          <div className="space-y-4 md:col-span-2">
-            {/* REVENUE CHART */}
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-sm font-semibold">
-                  Doanh thu 7 ngày gần nhất
-                </h2>
-                <span className="text-[11px] text-slate-500">VNĐ</span>
-              </div>
+            {preset === "custom" && (
+              <>
+                <input
+                  type="date"
+                  value={fromDate ?? ""}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="rounded-lg border px-3 py-1.5 text-sm"
+                />
+                <span className="text-slate-400">→</span>
+                <input
+                  type="date"
+                  value={toDate ?? ""}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="rounded-lg border px-3 py-1.5 text-sm"
+                />
+              </>
+            )}
+          </div>
+        </div>
 
-              <div className="h-40 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={dashboardData.chart}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                      dataKey="date"
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                    />
+        {/* ================= SUMMARY ================= */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <StatCard
+            label={`Doanh thu ${presetLabel[preset]}`}
+            value={`${summary.total_revenue.toLocaleString("vi-VN")} ₫`}
+          />
+          <StatCard
+            label={`Vé đã bán ${presetLabel[preset]}`}
+            value={`${summary.total_tickets} vé`}
+          />
+          <StatCard
+            label={`Suất chiếu ${presetLabel[preset]}`}
+            value={`${summary.total_showtimes} suất`}
+          />
+          <StatCard
+            label="Phim đang chiếu"
+            value={`${summary.total_movies_showing} phim`}
+          />
+        </div>
+
+        {/* ================= MAIN ================= */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            {/* CHART */}
+            <div className="rounded-2xl border bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-sm font-semibold">
+                Doanh thu {presetLabel[preset]}
+              </h2>
+
+              {chart.length === 0 ? (
+                <div className="flex h-[220px] items-center justify-center text-sm text-slate-400">
+                  Không có dữ liệu doanh thu
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={chart}>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="date" fontSize={12} />
                     <YAxis
-                      fontSize={11}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(value: number) =>
-                        `${value / 1_000_000}M`
-                      }
+                      fontSize={12}
+                      tickFormatter={(v) => `${v / 1_000_000}M`}
                     />
                     <Tooltip
-                      formatter={(value: number) =>
-                        `${value.toLocaleString("vi-VN")} ₫`
+                      formatter={(v: number) =>
+                        `${v.toLocaleString("vi-VN")} ₫`
                       }
                     />
                     <Line
-                      type="monotone"
                       dataKey="revenue"
                       stroke="#4F46E5"
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
+                      strokeWidth={2.5}
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* UPCOMING SHOWTIMES */}
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h2 className="mb-2 text-sm font-semibold">
-                Suất chiếu sắp diễn ra
-              </h2>
-
-              {dashboardData.upcoming_showtimes.length === 0 ? (
-                <p className="text-xs text-slate-500">
-                  Không có suất chiếu sắp tới
-                </p>
-              ) : (
-                <table className="w-full text-left text-[11px]">
-                  <thead className="border-b text-slate-500">
-                    <tr>
-                      <th>Phim</th>
-                      <th>Ngày</th>
-                      <th>Giờ</th>
-                      <th>Phòng</th>
-                      <th className="text-right">Đã bán</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {dashboardData.upcoming_showtimes.map((show) => (
-                      <tr key={`${show.movie}-${show.time}`}>
-                        <td className="font-medium">{show.movie}</td>
-                        <td>{show.date}</td>
-                        <td>{show.time}</td>
-                        <td>{show.room}</td>
-                        <td className="text-right">
-                          {show.sold}/{show.total}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               )}
             </div>
+
+            <MovieStatisticsTable movies={movies_statistics} />
           </div>
 
-          {/* RIGHT */}
-          <div className="space-y-4">
-            {/* PAYMENT METHOD */}
-            <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h2 className="mb-2 text-sm font-semibold">
-                Phương thức thanh toán
-              </h2>
-              <ul className="space-y-1 text-[11px]">
-                <li> VNPay: 100%</li>
-              </ul>
-            </div>
-
-            {/* LATEST BOOKINGS */}
-            <div className="h-[260px] rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-              <h2 className="mb-2 text-sm font-semibold">Đơn vé mới nhất</h2>
-
-              <div className="h-full overflow-y-auto">
-                <table className="w-full text-left text-[11px]">
-                  <thead className="border-b text-slate-500">
-                    <tr>
-                      <th>Mã</th>
-                      <th>Khách</th>
-                      <th>Giờ</th>
-                      <th>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {dashboardData.latest_bookings.map((bk) => (
-                      <tr key={bk.id}>
-                        <td>{bk.booking_code}</td>
-                        <td>{bk.customer_name}</td>
-                        <td>{bk.created_at.slice(11, 16)}</td>
-                        <td>
-                          <span
-                            className={`rounded-full px-2 py-[2px] text-[10px]
-                              ${
-                                bk.payment_status === "paid"
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-amber-50 text-amber-700"
-                              }`}
-                          >
-                            {bk.payment_status === "paid"
-                              ? "Đã thanh toán"
-                              : "Chờ thanh toán"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+          <div className="space-y-6">
+            <UpcomingShowtimes data={upcoming_showtimes} />
+            <LatestBookings data={latest_bookings} />
           </div>
-        </section>
-      </section>
+        </div>
+      </div>
     </div>
   );
 };
+
+/* =======================
+   SUB COMPONENTS
+======================= */
+
+const StatCard = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-2xl border bg-white p-4 shadow-sm">
+    <p className="text-[11px] uppercase text-slate-500">{label}</p>
+    <p className="mt-2 text-xl font-semibold">{value}</p>
+  </div>
+);
+
+const MovieStatisticsTable = ({
+  movies,
+}: {
+  movies: DashboardMovieStatistic[];
+}) => (
+  <div className="rounded-2xl border bg-white p-5 shadow-sm">
+    <h2 className="mb-3 text-sm font-semibold">Thống kê theo phim</h2>
+    <div className="max-h-[260px] overflow-y-auto">
+      <table className="w-full text-xs">
+        <thead className="sticky top-0 bg-white border-b text-slate-500">
+          <tr>
+            <th>Phim</th>
+            <th>Suất</th>
+            <th>Đã bán</th>
+            <th>Doanh thu</th>
+            <th className="text-right">Đánh giá</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {movies.map((m) => {
+            const perf = getMoviePerformance(m.fill_percent);
+            return (
+              <tr key={m.movie_id}>
+                <td className="py-2 font-medium">{m.movie}</td>
+                <td>{m.total_showtimes}</td>
+                <td>{m.sold_tickets}</td>
+                <td>{m.revenue.toLocaleString("vi-VN")} ₫</td>
+                <td className="text-right">
+                  <span
+                    className={`rounded-full px-2 py-[2px] text-[10px]
+                      ${
+                        perf.color === "green"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : perf.color === "yellow"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-rose-50 text-rose-700"
+                      }`}
+                  >
+                    {perf.label} ({m.fill_percent}%)
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
+const UpcomingShowtimes = ({
+  data,
+}: {
+  data: {
+    movie: string;
+    date: string;
+    time: string;
+    room: string;
+    sold: number;
+    capacity: number;
+  }[];
+}) => (
+  <div className="rounded-2xl border bg-white p-5 shadow-sm">
+    <h2 className="mb-3 text-sm font-semibold">Suất chiếu sắp diễn ra</h2>
+    <div className="max-h-[260px] space-y-3 overflow-y-auto">
+      {data.length === 0 ? (
+        <div className="text-center text-sm text-slate-400">
+          Chưa có suất chiếu sắp tới
+        </div>
+      ) : (
+        data.map((st, idx) => {
+          const percent =
+            st.capacity > 0
+              ? Math.round((st.sold / st.capacity) * 100)
+              : 0;
+          return (
+            <div key={idx} className="rounded-xl border p-3">
+              <p className="text-sm font-medium">{st.movie}</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {st.date} • {st.time} • {st.room}
+              </p>
+              <div className="mt-2 h-2 rounded-full bg-slate-100">
+                <div
+                  className="h-2 rounded-full bg-indigo-500"
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+              <p className="mt-1 text-right text-[11px] text-slate-400">
+                {st.sold}/{st.capacity} • {percent}%
+              </p>
+            </div>
+          );
+        })
+      )}
+    </div>
+  </div>
+);
+
+const LatestBookings = ({
+  data,
+}: {
+  data: {
+    id: number;
+    booking_code: string;
+    customer_name: string;
+    payment_status: "paid" | "pending";
+    created_at: string | null;
+  }[];
+}) => (
+  <div className="rounded-2xl border bg-white p-5 shadow-sm">
+    <h2 className="mb-3 text-sm font-semibold">Đơn vé mới nhất</h2>
+    <div className="max-h-[260px] overflow-y-auto">
+      <table className="w-full text-xs">
+        <thead className="sticky top-0 bg-white border-b text-slate-500">
+          <tr>
+            <th>Mã</th>
+            <th>Khách</th>
+            <th>Giờ</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {data.map((bk) => (
+            <tr key={bk.id}>
+              <td className="py-2">{bk.booking_code}</td>
+              <td>{bk.customer_name}</td>
+              <td>{bk.created_at?.slice(11, 16) ?? "--:--"}</td>
+              <td>
+                <span
+                  className={`rounded-full px-2 py-[2px] text-[10px]
+                    ${
+                      bk.payment_status === "paid"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-700"
+                    }`}
+                >
+                  {bk.payment_status === "paid"
+                    ? "Đã thanh toán"
+                    : "Chờ thanh toán"}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
 
 export default DashboardStatistics;
