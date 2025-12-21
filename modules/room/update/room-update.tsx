@@ -170,11 +170,11 @@ export default function RoomUpdateForm({ id }: { id: number }) {
               <FormControl>
                 <select
                   className="h-9 w-full border rounded-md px-3"
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.target.value)}
+                  {...field}
                 >
                   <option value="active">Đang hoạt động</option>
-                  <option value="inactive">Ngừng hoạt động</option>
+                  <option value="maintenance">Bảo trì</option>
+                  <option value="closed">Đã đóng</option>
                 </select>
               </FormControl>
               <FormMessage />

@@ -19,7 +19,7 @@ import instance from "@/lib/instance";
 import { useUpdateShowTime } from "@/api/hooks/use-showtime-update";
 import type { AxiosError } from "axios";
 
-import { ConflictResponse, MovieItem, RoomItem } from "@/api/interfaces/showtimes-interface";
+import { ConflictResponse, MovieItem, RoomItem, ShowtimeOverlapConflict, TimeRangeConflict } from "@/api/interfaces/showtimes-interface";
 
 // =======================
 // ZOD SCHEMA
@@ -51,6 +51,27 @@ export default function ShowTimeUpdateForm() {
     },
   });
 
+    function isTimeRangeConflict(
+    conflict: unknown
+  ): conflict is TimeRangeConflict {
+    return (
+      typeof conflict === "object" &&
+      conflict !== null &&
+      "error" in conflict &&
+      typeof (conflict as { error: unknown }).error === "string"
+    );
+  }
+  
+  function isShowtimeOverlapConflict(
+    conflict: unknown
+  ): conflict is ShowtimeOverlapConflict {
+    return (
+      typeof conflict === "object" &&
+      conflict !== null &&
+      "existing_showtime_id" in conflict
+    );
+  }
+
   const [movies, setMovies] = useState<MovieItem[]>([]);
   const [rooms, setRooms] = useState<RoomItem[]>([]);
 
@@ -61,7 +82,7 @@ export default function ShowTimeUpdateForm() {
   // SELECT MOVIE TO CHECK RELEASE DATE
   const selectedMovie = movies.find((m) => m.id === Number(form.watch("movie_id")));
 
-  const watchDate = form.watch("show_date");
+  // const watchDate = form.watch("show_date");
 
   // LOAD MOVIES + ROOMS
   useEffect(() => {
@@ -114,23 +135,38 @@ export default function ShowTimeUpdateForm() {
           toast.success("Cập nhật suất chiếu thành công!");
           router.back();
         },
-        onError: (error) => {
-          const axiosErr = error as AxiosError<ConflictResponse>;
-          const res = axiosErr.response?.data;
+        onError: (error: AxiosError<ConflictResponse>) => {
+          const res = error.response?.data;
+          if (!res) {
+            toast.error("Có lỗi xảy ra");
+            return;
+          }
 
-          if (res?.conflict) {
-            const c = res.conflict;
+          const { conflict } = res;
 
+          //  Sai khung giờ (08:00–23:59)
+          if (isTimeRangeConflict(conflict)) {
+            toast.error(conflict.error);
+            return;
+          }
+
+          //  Trùng lịch chiếu
+          if (isShowtimeOverlapConflict(conflict)) {
             toast.error(
               <div className="space-y-1">
                 <p>⛔ <b>Lịch chiếu bị trùng!</b></p>
-                <p>• ID trùng: <b>{c.existing_showtime_id}</b></p>
-                <p>• Phim: <b>{c.existing_movie}</b></p>
-                <p>• Giờ trùng: {c.existing_start} → {c.existing_end}</p>
-                <p>• Cần bắt đầu sau: {c.required_next_start}</p>
+                <p>• ID trùng: <b>{conflict.existing_showtime_id}</b></p>
+                <p>• Phim: <b>{conflict.existing_movie}</b></p>
+                <p>
+                  • Giờ trùng: {conflict.existing_start} →{" "}
+                  {conflict.existing_end}
+                </p>
+                <p>
+                  • Cần bắt đầu sau:{" "}
+                  {conflict.required_next_start}
+                </p>
               </div>
             );
-
             return;
           }
 
@@ -252,29 +288,74 @@ export default function ShowTimeUpdateForm() {
           control={form.control}
           name="show_time"
           render={({ field }) => {
-            // Lấy giờ máy
-            const now = new Date();
-            const HH = String(now.getHours()).padStart(2, "0");
-            const MM = String(now.getMinutes()).padStart(2, "0");
-            const currentTime = `${HH}:${MM}`;
-
-            // Lấy ngày máy chuẩn YYYY-MM-DD
-            const todayStr = new Date().toLocaleDateString("en-CA");
-
-            const isToday = watchDate === todayStr;
          return(
              <FormItem>
                 <FormLabel>Giờ chiếu</FormLabel>
                 <FormControl>
                 <Input
                 {...field}
-                    type="time"
-                    step="60"
-                    lang="en"
-                    min={isToday ? currentTime : undefined}
-                    value={field.value ?? ""}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    className="h-10 px-3 bg-background"
+                  type="text"
+                  inputMode="numeric" 
+                  placeholder="HH:mm (VD: 08:10)"
+                  value={field.value ?? ""}
+
+                  //Chỉ cho gõ số + phím điều hướng
+                  onKeyDown={(e) => {
+                    const allowedKeys = [
+                      "Backspace",
+                      "Delete",
+                      "ArrowLeft",
+                      "ArrowRight",
+                      "Tab",
+                    ];
+
+                    if (
+                      !/^[0-9]$/.test(e.key) &&
+                      !allowedKeys.includes(e.key)
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
+
+                  //Chặn paste chữ / ký tự đặc biệt
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const text = e.clipboardData.getData("text");
+                    const digits = text.replace(/\D/g, "").slice(0, 4);
+
+                    field.onChange(digits);
+                  }}
+
+                  //Cập nhật raw value (chỉ số)
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    field.onChange(digits);
+                  }}
+
+                  //Chuẩn hoá khi blur → HH:mm
+                  onBlur={(e) => {
+                    const raw = e.target.value.trim();
+                    const digits = raw.replace(/\D/g, "");
+
+                    if (digits.length !== 4) return;
+
+                    const h = digits.slice(0, 2);
+                    const m = digits.slice(2, 4);
+
+                    const hour = Number(h);
+                    const minute = Number(m);
+
+                    if (
+                      hour >= 0 &&
+                      hour <= 23 &&
+                      minute >= 0 &&
+                      minute <= 59
+                    ) {
+                      field.onChange(`${h}:${m}`);
+                    }
+                  }}
+
+                  className="h-10 px-3 bg-background"
                 />
                 </FormControl>
                 <FormMessage />

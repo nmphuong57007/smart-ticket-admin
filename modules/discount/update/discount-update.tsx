@@ -31,6 +31,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { useUpdateDiscount } from "@/api/hooks/use-discount-update";
 import { useDiscounts } from "@/api/hooks/use-discount";
 import { DiscountUpdateReqInterface } from "@/api/interfaces/discount-interface";
+import instance from "@/lib/instance";
 
 // ============================
 // ZOD SCHEMA
@@ -54,17 +55,13 @@ export const formSchema = z
       .refine((v) => !isNaN(Number(v)), "Số lượt sử dụng phải là số")
       .refine((v) => Number(v) > 0, "Số lượt sử dụng phải > 0"),
 
-    movie_id: z
-      .string()
-      .optional()
-      .refine(
-        (v) => !v || !isNaN(Number(v)),
-        "ID phim phải là số (hoặc để trống)"
-      )
-      .refine(
-        (v) => !v || Number(v) > 0,
-        "ID phim phải > 0 (nếu có)"
-      ),
+     movie_id: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || (!isNaN(Number(v)) && Number(v) > 0),
+      "Phim áp dụng không hợp lệ"
+    ),
 
     min_order_amount: z
       .string()
@@ -75,7 +72,7 @@ export const formSchema = z
     start_date: z.string().min(1, "Ngày bắt đầu là bắt buộc"),
     end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
 
-    status: z.enum(["active", "expired"]),
+    status: z.enum(["active", "disabled"]),
   })
   .superRefine((values, ctx) => {
     // validate ngày
@@ -157,6 +154,22 @@ export default function DiscountUpdateForm({ id }: { id: number }) {
   const [openStart, setOpenStart] = useState(false);
   const [openEnd, setOpenEnd] = useState(false);
 
+   const [movies, setMovies] = useState<
+    {
+      id: number;
+      title: string;
+      duration: number;
+      status: string;
+    }[]
+  >([]);
+
+    useEffect(() => {
+     instance.get("/api/movies/list?per_page=100").then((res) => {
+    console.log("MOVIES API:", res.data);
+    setMovies(res.data.data.movies); // ✔ LẤY ĐÚNG MẢNG
+  });
+  }, []);
+
   // Form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -181,9 +194,9 @@ export default function DiscountUpdateForm({ id }: { id: number }) {
   useEffect(() => {
     if (discount && !isLoading) {
       const safeStatus =
-        discount.status === "active" || discount.status === "expired"
+        discount.status === "active" || discount.status === "disabled"
           ? discount.status
-          : "expired";
+          : "disabled";
 
       const start = new Date(discount.start_date);
       const end = new Date(discount.end_date);
@@ -322,7 +335,7 @@ export default function DiscountUpdateForm({ id }: { id: number }) {
                     {...field}
                   >
                     <option value="active">Đang hoạt động</option>
-                    <option value="expired">Ngừng hoạt động</option>
+                    <option value="disabled">Ngừng hoạt động</option>
                   </select>
                 </FormControl>
                 <FormMessage />
@@ -417,14 +430,26 @@ export default function DiscountUpdateForm({ id }: { id: number }) {
             name="movie_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ID phim áp dụng (có thể để trống)</FormLabel>
+                <FormLabel>Phim áp dụng (tuỳ chọn)</FormLabel>
                 <FormControl>
-                  <Input
-                    type="number"
-                    min={1}
-                    placeholder="VD: 2"
-                    {...field}
-                  />
+                  <select
+                    name={field.name}
+                    value={field.value?.toString() ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                    className="h-9 w-full border rounded-md px-3 bg-background"
+                  >
+                    <option value="">Tất cả phim</option>
+
+                    {movies
+                      .filter((m) => m.status !== "stopped") // loại phim đã dừng chiếu
+                      .map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.title} ({m.duration} phút)
+                        </option>
+                      ))}
+                  </select>
                 </FormControl>
                 <FormMessage />
               </FormItem>

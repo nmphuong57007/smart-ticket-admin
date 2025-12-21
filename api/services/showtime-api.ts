@@ -14,16 +14,17 @@ export const getShowtimes = async (
   per_page?: number,
   page?: number,
   sort_by?: string,
-  sort_order?:string,
- 
+  sort_order?: string,
+  room_id?: number
 ): Promise<ShowTimeResInterface> => {
   try {
     const res = await instance.get<ShowTimeResInterface>(`/api/showtimes`, {
       params: {
-        per_page,
-        page,
-        sort_by,
-        sort_order,
+      per_page,
+      page,
+      sort_by,
+      sort_order,
+      room_id,
       },
     });
     return res.data;
