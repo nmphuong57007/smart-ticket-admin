@@ -33,8 +33,8 @@ export const redirectConfig = {
   bookingDetail: (id: string | number) => `/bookings/${id}/detail`,
 
 
-  seatReservation: "/seat-reservation",
 
+  comment: "/comment",
   // combos: "/combos",
 
   products: "/products",
