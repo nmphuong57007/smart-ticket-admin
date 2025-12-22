@@ -22,6 +22,7 @@ import { AxiosError } from "axios";
 import SeatMapBuilder from "@/components/seat-map-builder";
 import { useRoomDetail } from "@/api/hooks/use-room-detail";
 import { useUpdateRoom } from "@/api/hooks/use-room-update";
+import { useEffect } from "react";
 
 
 // ============================
@@ -76,14 +77,19 @@ export default function RoomUpdateForm({ id }: { id: number }) {
   });
 
   // Fill form khi có dữ liệu room
-  if (roomDetail && !form.getValues("name")) {
-    const r = roomDetail.data;
+useEffect(() => {
+  if (!roomDetail) return;
 
-    form.setValue("name", r.name);
-    form.setValue("status", r.status.code);
-    form.setValue("seat_map", r.seat_map as SeatItem[][]);
-    form.setValue("total_seats", r.total_seats);
-  }
+  const r = roomDetail.data;
+
+  form.reset({
+    name: r.name,
+    status: r.status.code,
+    seat_map: r.seat_map as SeatItem[][],
+    total_seats: r.total_seats,
+  });
+}, [roomDetail, form]);
+
 
   const calcTotalSeats = (seat_map: SeatItem[][]) =>
     seat_map.reduce((sum, row) => sum + row.length, 0);
@@ -144,7 +150,7 @@ export default function RoomUpdateForm({ id }: { id: number }) {
           name="seat_map"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Sơ đồ ghế</FormLabel>
+              <FormLabel></FormLabel>
               <FormControl>
                 <SeatMapBuilder
                   value={field.value}
