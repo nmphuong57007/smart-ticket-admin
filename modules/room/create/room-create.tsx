@@ -22,9 +22,9 @@ import type { AxiosError } from "axios";
 import { useCreateRoom } from "@/api/hooks/use-room-create";
 import SeatMapBuilder, { SeatItem } from "@/components/seat-map-builder";
 
-// ============================
-// ZOD SCHEMA
-// ============================
+/* ============================
+   ZOD SCHEMA
+============================ */
 const formSchema = z.object({
   name: z.string().min(1, "Tên phòng chiếu là bắt buộc"),
 
@@ -43,14 +43,16 @@ const formSchema = z.object({
   status: z.string().min(1, "Trạng thái là bắt buộc"),
 });
 
-// ============================
-// COMPONENT
-// ============================
+/* ============================
+   COMPONENT
+============================ */
 export default function RoomCreateForm() {
   const router = useRouter();
   const { mutate: createRoom, isPending: isCreating } = useCreateRoom();
 
-  // Default seat map A–E
+  /* ============================
+     DEFAULT SEAT MAP (A–E)
+  ============================ */
   const defaultSeatMap: SeatItem[][] = [
     Array.from({ length: 8 }, (_, i) => ({
       code: `A${i + 1}`,
@@ -89,12 +91,15 @@ export default function RoomCreateForm() {
     },
   });
 
+  /* ============================
+     HELPERS
+  ============================ */
   const calcTotalSeats = (seat_map: SeatItem[][]) =>
     seat_map.reduce((sum, row) => sum + row.length, 0);
 
-  // ============================
-  // SUBMIT HANDLER
-  // ============================
+  /* ============================
+     SUBMIT HANDLER
+  ============================ */
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     const payload = {
       ...data,
@@ -116,14 +121,16 @@ export default function RoomCreateForm() {
     });
   };
 
-  // ============================
-  // UI FORM
-  // ============================
+  /* ============================
+     UI
+  ============================ */
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
-        {/* Tên phòng */}
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
+        {/* TÊN PHÒNG */}
         <FormField
           control={form.control}
           name="name"
@@ -131,26 +138,32 @@ export default function RoomCreateForm() {
             <FormItem>
               <FormLabel>Tên phòng chiếu</FormLabel>
               <FormControl>
-                <Input placeholder="Phòng 1, Phòng VIP 1..." {...field} />
+                <Input
+                  placeholder="Phòng 1, Phòng VIP 1..."
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        {/* Sơ đồ ghế */}
+        {/* SƠ ĐỒ GHẾ */}
         <FormField
           control={form.control}
           name="seat_map"
           render={({ field }) => (
             <FormItem>
-              {/* <FormLabel>Sơ đồ ghế</FormLabel> */}
               <FormControl>
                 <SeatMapBuilder
                   value={field.value}
+                  enableSeatStatus={true} // 👈 cho phép double click ẩn ghế
                   onChange={(val) => {
                     field.onChange(val);
-                    form.setValue("total_seats", calcTotalSeats(val));
+                    form.setValue(
+                      "total_seats",
+                      calcTotalSeats(val)
+                    );
                   }}
                 />
               </FormControl>
@@ -159,7 +172,7 @@ export default function RoomCreateForm() {
           )}
         />
 
-        {/* Trạng thái */}
+        {/* TRẠNG THÁI */}
         <FormField
           control={form.control}
           name="status"
@@ -170,10 +183,11 @@ export default function RoomCreateForm() {
                 <select
                   className="h-9 w-full rounded-md border px-3 text-sm"
                   value={field.value}
-                  onChange={(e) => field.onChange(e.target.value)}
+                  onChange={(e) =>
+                    field.onChange(e.target.value)
+                  }
                 >
                   <option value="active">Đang hoạt động</option>
-             
                 </select>
               </FormControl>
               <FormMessage />
@@ -181,12 +195,15 @@ export default function RoomCreateForm() {
           )}
         />
 
-        {/* Submit */}
-        <Button type="submit" className="w-full" disabled={isCreating}>
+        {/* SUBMIT */}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isCreating}
+        >
           Tạo phòng chiếu
           {isCreating && <Spinner />}
         </Button>
-
       </form>
     </Form>
   );
