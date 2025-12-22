@@ -13,7 +13,7 @@ export const useDeleteReview = () => {
 
     onSuccess: (res) => {
       toast.success(res.message);
-      queryClient.invalidateQueries({ queryKey: ["getReviews"] });
+      queryClient.invalidateQueries({ queryKey: ["adminReviews"] });
     },
 
     onError: () => {

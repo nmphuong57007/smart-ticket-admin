@@ -67,13 +67,13 @@ type ReviewItem = ReviewType["data"][number];
   const STATUS: Record<string, string> = {
     pending: "Chờ duyệt",
     approved: "Đã duyệt",
-    rejected: "Chưa duyệt",
+    rejected: "Từ chối",
   };
 
   const STATUS_CLASS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700",
   approved: "bg-green-100 text-green-700",
-  rejected: "bg-gray-100 text-gray-700",
+  rejected: "bg-red-100 text-red-700",
 };
 
 

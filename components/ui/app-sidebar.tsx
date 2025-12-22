@@ -84,7 +84,7 @@ const data = {
       icon: Ticket,
     },
     {
-      title: "Quản lý đánh giá & bình luận",
+      title: "Quản lý bình luận",
       url: redirectConfig.comment,
       icon: MessageSquareMoreIcon,
     },
