@@ -12,6 +12,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { toast } from "sonner";
+import { CalendarIcon } from "lucide-react";
 
 import { useDashboardStatistics } from "@/api/hooks/use-dashboard-statistics";
 import {
@@ -19,20 +20,69 @@ import {
   DashboardMovieStatistic,
 } from "@/api/interfaces/dashboard-interface";
 
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+
 /* =======================
    TYPES
 ======================= */
 
 type PresetType = "today" | "7d" | "30d" | "custom";
 
+interface UpcomingShowtime {
+  movie: string;
+  date: string;
+  time: string;
+  room: string;
+  sold: number;
+  capacity: number;
+}
+
+interface LatestBooking {
+  id: number;
+  booking_code: string;
+  customer_name: string;
+  payment_status: "paid" | "pending";
+  created_at: string | null;
+}
+
 /* =======================
-   HELPERS
+   HELPERS (FIX LÙI NGÀY)
 ======================= */
 
 const getMoviePerformance = (fillPercent: number) => {
   if (fillPercent >= 70) return { label: "Bán chạy", color: "green" };
   if (fillPercent >= 40) return { label: "Trung bình", color: "yellow" };
   return { label: "Ít người xem", color: "red" };
+};
+
+/**
+ * string (YYYY-MM-DD) -> Date (LOCAL)
+ * ❌ không dùng new Date(string)
+ */
+const toDate = (value?: string): Date | undefined => {
+  if (!value) return undefined;
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+/**
+ * Date -> string (YYYY-MM-DD) theo LOCAL TIME
+ * ❌ không dùng toISOString
+ */
+const toString = (date?: Date): string | undefined => {
+  if (!date) return undefined;
+
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+
+  return `${y}-${m}-${d}`;
 };
 
 /* =======================
@@ -58,7 +108,7 @@ const DashboardStatistics = () => {
   const [fromDate, setFromDate] = useState<string | undefined>(
     searchParams.get("from") ?? undefined
   );
-  const [toDate, setToDate] = useState<string | undefined>(
+  const [toDateState, setToDateState] = useState<string | undefined>(
     searchParams.get("to") ?? undefined
   );
 
@@ -67,9 +117,9 @@ const DashboardStatistics = () => {
   ======================= */
 
   const isDateValid = useMemo(() => {
-    if (!fromDate || !toDate) return true;
-    return new Date(fromDate) <= new Date(toDate);
-  }, [fromDate, toDate]);
+    if (!fromDate || !toDateState) return true;
+    return toDate(fromDate)! <= toDate(toDateState)!;
+  }, [fromDate, toDateState]);
 
   useEffect(() => {
     if (!isDateValid) {
@@ -87,25 +137,25 @@ const DashboardStatistics = () => {
 
     if (preset === "custom") {
       if (fromDate) params.set("from", fromDate);
-      if (toDate) params.set("to", toDate);
+      if (toDateState) params.set("to", toDateState);
     }
 
     router.replace(`?${params.toString()}`, { scroll: false });
-  }, [preset, fromDate, toDate, router]);
+  }, [preset, fromDate, toDateState, router]);
 
   /* =======================
-     CALL API (SAFE)
+     CALL API
   ======================= */
 
   const shouldFetch =
-    preset !== "custom" || (fromDate && toDate && isDateValid);
+    preset !== "custom" || (fromDate && toDateState && isDateValid);
 
   const { data, isLoading } = useDashboardStatistics(
     shouldFetch
       ? {
           range: preset === "custom" ? undefined : range,
           from_date: preset === "custom" ? fromDate : undefined,
-          to_date: preset === "custom" ? toDate : undefined,
+          to_date: preset === "custom" ? toDateState : undefined,
         }
       : {}
   );
@@ -134,8 +184,8 @@ const DashboardStatistics = () => {
   };
 
   const filterDescription =
-    preset === "custom" && fromDate && toDate
-      ? `Từ ${fromDate} → ${toDate}`
+    preset === "custom" && fromDate && toDateState
+      ? `Từ ${fromDate} → ${toDateState}`
       : presetLabel[preset];
 
   const handlePresetChange = (value: PresetType) => {
@@ -144,14 +194,14 @@ const DashboardStatistics = () => {
     if (value !== "custom") {
       setRange(value);
       setFromDate(undefined);
-      setToDate(undefined);
+      setToDateState(undefined);
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 px-6 py-6 text-slate-900">
       <div className="mx-auto max-w-[1280px] space-y-6">
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-lg font-semibold">Thống kê hệ thống</h1>
@@ -182,26 +232,83 @@ const DashboardStatistics = () => {
             </select>
 
             {preset === "custom" && (
-              <>
-                <input
-                  type="date"
-                  value={fromDate ?? ""}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="rounded-lg border px-3 py-1.5 text-sm"
-                />
+              <div className="flex items-center gap-2">
+                {/* FROM */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-[140px] justify-start text-left text-sm font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {fromDate ?? "Từ ngày"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={toDate(fromDate)}
+                      onSelect={(date) =>
+                        setFromDate(toString(date))
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+
                 <span className="text-slate-400">→</span>
-                <input
-                  type="date"
-                  value={toDate ?? ""}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="rounded-lg border px-3 py-1.5 text-sm"
-                />
-              </>
+
+                {/* TO */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-[140px] justify-start text-left text-sm font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {toDateState ?? "Đến ngày"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={toDate(toDateState)}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date > today;
+                      }}
+                      onSelect={(date) => {
+                        if (!date) return;
+
+                        const localDate = new Date(
+                          date.getFullYear(),
+                          date.getMonth(),
+                          date.getDate()
+                        );
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        if (localDate > today) {
+                          toast.error(
+                            "Không được chọn ngày lớn hơn ngày hiện tại"
+                          );
+                          return;
+                        }
+
+                        setToDateState(toString(localDate));
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             )}
           </div>
         </div>
 
-        {/* ================= SUMMARY ================= */}
+        {/* SUMMARY */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <StatCard
             label={`Doanh thu ${presetLabel[preset]}`}
@@ -221,10 +328,9 @@ const DashboardStatistics = () => {
           />
         </div>
 
-        {/* ================= MAIN ================= */}
+        {/* MAIN */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
-            {/* CHART */}
             <div className="rounded-2xl border bg-white p-5 shadow-sm">
               <h2 className="mb-3 text-sm font-semibold">
                 Doanh thu {presetLabel[preset]}
@@ -286,66 +392,88 @@ const MovieStatisticsTable = ({
   movies,
 }: {
   movies: DashboardMovieStatistic[];
-}) => (
-  <div className="rounded-2xl border bg-white p-5 shadow-sm">
-    <h2 className="mb-3 text-sm font-semibold">Thống kê theo phim</h2>
-    <div className="max-h-[260px] overflow-y-auto">
-      <table className="w-full text-xs">
-        <thead className="sticky top-0 bg-white border-b text-slate-500">
-          <tr>
-            <th>Phim</th>
-            <th>Suất</th>
-            <th>Đã bán</th>
-            <th>Doanh thu</th>
-            <th className="text-right">Đánh giá</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y">
-          {movies.map((m) => {
-            const perf = getMoviePerformance(m.fill_percent);
-            return (
-              <tr key={m.movie_id}>
-                <td className="py-2 font-medium">{m.movie}</td>
-                <td>{m.total_showtimes}</td>
-                <td>{m.sold_tickets}</td>
-                <td>{m.revenue.toLocaleString("vi-VN")} ₫</td>
-                <td className="text-right">
-                  <span
-                    className={`rounded-full px-2 py-[2px] text-[10px]
-                      ${
-                        perf.color === "green"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : perf.color === "yellow"
-                          ? "bg-amber-50 text-amber-700"
-                          : "bg-rose-50 text-rose-700"
-                      }`}
-                  >
-                    {perf.label} ({m.fill_percent}%)
-                  </span>
+}) => {
+  return (
+    <div className="rounded-2xl border bg-white p-5 shadow-sm">
+      <h2 className="mb-4 text-sm font-semibold text-slate-800">
+        Thống kê theo phim
+      </h2>
+
+      <div className="max-h-[260px] overflow-y-auto">
+        <table className="w-full text-xs border-separate border-spacing-y-1">
+          <thead className="sticky top-0 bg-white border-b text-slate-500">
+            <tr>
+              <th className="text-left">Phim</th>
+              <th className="text-center">Suất</th>
+              <th className="text-center">Tổng ghế</th>
+              <th className="text-center">Đã bán</th>
+              <th className="text-right">Doanh thu</th>
+              <th className="text-right">Đánh giá</th>
+            </tr>
+          </thead>
+          <tbody>
+            {movies.length === 0 && (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="py-8 text-center text-slate-400"
+                >
+                  Không có dữ liệu thống kê
                 </td>
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            )}
+
+            {movies.map((m) => {
+              const perf = getMoviePerformance(m.fill_percent);
+
+              return (
+                <tr
+                  key={m.movie_id}
+                  className="hover:bg-slate-50 transition-colors"
+                >
+                  <td className="px-2 py-2 font-medium">
+                    {m.movie}
+                  </td>
+                  <td className="text-center">{m.total_showtimes}</td>
+                  <td className="text-center">{m.total_seats}</td>
+                  <td className="text-center">{m.sold_tickets}</td>
+                  <td className="text-right">
+                    {m.revenue.toLocaleString("vi-VN")} ₫
+                  </td>
+                  <td className="text-right">
+                    <span
+                      className={`rounded-full px-2 py-[3px] text-[10px] font-medium
+                        ${
+                          perf.color === "green"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : perf.color === "yellow"
+                            ? "bg-amber-50 text-amber-700"
+                            : "bg-rose-50 text-rose-700"
+                        }
+                      `}
+                    >
+                      {perf.label} ({m.fill_percent}%)
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const UpcomingShowtimes = ({
   data,
 }: {
-  data: {
-    movie: string;
-    date: string;
-    time: string;
-    room: string;
-    sold: number;
-    capacity: number;
-  }[];
+  data: UpcomingShowtime[];
 }) => (
   <div className="rounded-2xl border bg-white p-5 shadow-sm">
-    <h2 className="mb-3 text-sm font-semibold">Suất chiếu sắp diễn ra</h2>
+    <h2 className="mb-3 text-sm font-semibold">
+      Suất chiếu sắp diễn ra
+    </h2>
     <div className="max-h-[260px] space-y-3 overflow-y-auto">
       {data.length === 0 ? (
         <div className="text-center text-sm text-slate-400">
@@ -383,16 +511,12 @@ const UpcomingShowtimes = ({
 const LatestBookings = ({
   data,
 }: {
-  data: {
-    id: number;
-    booking_code: string;
-    customer_name: string;
-    payment_status: "paid" | "pending";
-    created_at: string | null;
-  }[];
+  data: LatestBooking[];
 }) => (
   <div className="rounded-2xl border bg-white p-5 shadow-sm">
-    <h2 className="mb-3 text-sm font-semibold">Đơn vé mới nhất</h2>
+    <h2 className="mb-3 text-sm font-semibold">
+      Đơn vé mới nhất
+    </h2>
     <div className="max-h-[260px] overflow-y-auto">
       <table className="w-full text-xs">
         <thead className="sticky top-0 bg-white border-b text-slate-500">
@@ -420,7 +544,7 @@ const LatestBookings = ({
                 >
                   {bk.payment_status === "paid"
                     ? "Đã thanh toán"
-                    : "Chờ thanh toán"}
+                    : "Chưa thanh toán"}
                 </span>
               </td>
             </tr>
