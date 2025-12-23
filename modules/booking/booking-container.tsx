@@ -62,7 +62,7 @@ export default function BookingContainer() {
     
     <>
       <CardWrapperTable
-        title="Quản lý Vé"
+        title="Quản lý đơn vé"
         actions={
           <Fragment>
             <Button

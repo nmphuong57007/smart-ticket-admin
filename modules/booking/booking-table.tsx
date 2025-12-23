@@ -154,9 +154,9 @@ export function BookingTable({
               >
                 Xem chi tiết
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {/* <DropdownMenuSeparator /> */}
 
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 disabled={isPending}
                 onClick={() => {
                   if (confirm("Bạn chắc chắn muốn xóa đơn này?")) {
@@ -166,7 +166,7 @@ export function BookingTable({
                 className="text-red-500"
               >
                 Xóa
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
             </DropdownMenuContent>
           </DropdownMenu>
         );

@@ -9,73 +9,78 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useDeleteUser } from "@/api/hooks/use-user-delete";
 import { Spinner } from "@/components/ui/spinner";
+import { User, UserStatus } from "@/api/interfaces/user-toggle-status.interface";
+import { useUserToggleStatus } from "@/api/hooks/use-user-toggle-status";
+import { useState } from "react";
+
 
 interface UserTableProps {
-  data: UserType[];
+  data: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
   setPage: React.Dispatch<React.SetStateAction<number>>;
   lastPage: number;
   currentPage: number;
-  refetchUsers: () => void;
 }
 
-export type UserType = {
-  id: number;
-  fullname: string;
-  email: string;
-  phone: string;
-  address: null;
-  gender: null;
-  avatar: string;
-  role: string;
-  points: number;
-  status: string;
-  created_at: string;
-  updated_at: string;
-};
+
 
 export default function UserTable({
   data,
-  refetchUsers,
   setPage,
   lastPage,
-  currentPage
+  currentPage,
 }: UserTableProps) {
+const { mutate: toggleStatus} = useUserToggleStatus();
+const [loadingUserId, setLoadingUserId] = useState<number | null>(null);
 
-  const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
 
-  const handleDeleteUser = (userID: number) => {
-    deleteUser(userID, {
-      onSuccess: () => {
-        refetchUsers();
-        toast.success("Xóa người dùng thành công.");
+const handleToggleStatus = (user: User) => {
+  const newStatus: UserStatus =
+    user.status === "active" ? "blocked" : "active";
+
+  setLoadingUserId(user.id);
+
+  toggleStatus(
+    { userId: user.id, status: newStatus },
+    {
+      onSuccess: (res) => {
+        toast.success(res.message);
+
+        //update UI tại chỗ, KHÔNG refetch
+        user.status = newStatus;
       },
-      onError: () => toast.error("Lỗi khi xóa người dùng."),
-    });
-  };
-  //phân trang
+      onError: () => {
+        toast.error("Cập nhật trạng thái thất bại");
+      },
+      onSettled: () => {
+        setLoadingUserId(null);
+      },
+    }
+  );
+};
+
+
   const handleNextPage = () => {
-    setPage((prevPage) => Math.min(prevPage + 1, lastPage));
+    setPage((prev) => Math.min(prev + 1, lastPage));
   };
 
   const handlePreviousPage = () => {
-    setPage((prevPage) => Math.max(prevPage - 1, 1));
+    setPage((prev) => Math.max(prev - 1, 1));
   };
 
   return (
     <div className="space-y-4">
-
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>ID</TableHead>
-            <TableHead>Full Name</TableHead>
+            <TableHead>Tên Người Dùng</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Action</TableHead>
+            <TableHead>Số Điện Thoại</TableHead>
+            <TableHead>Vai Trò</TableHead>
+            <TableHead>Trạng Thái</TableHead>
+            <TableHead>Hành Động</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -87,22 +92,38 @@ export default function UserTable({
               <TableCell>{user.email}</TableCell>
               <TableCell>{user.phone}</TableCell>
               <TableCell>{user.role}</TableCell>
-              <TableCell>{user.status}</TableCell>
+
+              <TableCell>
+                <span
+                  className={`rounded-full px-2 py-1 text-xs font-medium ${
+                    user.status === "active"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {user.status === "active" ? "Hoạt động" : "Đã khóa"}
+                </span>
+              </TableCell>
+
               <TableCell>
                 <Button
-                  variant="destructive"
                   size="sm"
-                  onClick={() => handleDeleteUser(user.id)}
+                  className="min-w-[90px]"
+                  variant={user.status === "active" ? "destructive" : "default"}
+                  onClick={() => handleToggleStatus(user)}
+                  disabled={loadingUserId === user.id}
                 >
-                  Delete User
-                  {isDeleting && <Spinner className="ml-2 size-4" />}
+                  {user.status === "active" ? "Khóa" : "Mở khóa"}
+                  {loadingUserId === user.id && (
+                    <Spinner className="ml-2 size-4" />
+                  )}
                 </Button>
+
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-
 
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
@@ -123,8 +144,6 @@ export default function UserTable({
           Trang sau
         </Button>
       </div>
-
     </div>
   );
 }
-
