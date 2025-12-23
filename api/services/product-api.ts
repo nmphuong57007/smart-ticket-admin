@@ -13,7 +13,7 @@ export const getProducts = async (
   page?: number,
   sort_by?: string,
   sort_order?:string,
-  search?: string
+  q?: string
  
 ): Promise<ProductResInterface> => {
   try {
@@ -23,7 +23,7 @@ export const getProducts = async (
         page,
         sort_by,
         sort_order,
-        search,
+        q,
       },
     });
     return res.data;

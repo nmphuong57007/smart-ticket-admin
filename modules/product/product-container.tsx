@@ -16,7 +16,7 @@ import Search from "@/components/search";
 const per_page = 10;
 export default function ProductContainer() {
   const [page, setPage] = useState<number>(1);
-  const [search, setSearch] = useState("");
+  const [q, setSearch] = useState("");
 
   const { data: products, isError, isLoading } = useProducts(
     
@@ -24,7 +24,7 @@ export default function ProductContainer() {
     page, 
     "id",
     "desc",
-    search
+    q
   );
 
   if (isError) toast.error("Đã có lỗi xảy ra khi tải danh sách sản phẩm.");
@@ -43,7 +43,7 @@ export default function ProductContainer() {
       }
     >
       <Search
-        value={search}
+        value={q}
         onChange={(v) => {
           setSearch(v);
           setPage(1);
