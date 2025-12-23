@@ -8,11 +8,11 @@ export const useProducts = (
   page?: number,
   sort_by?:string,
   sort_order?: string,
-  search?:string
+  q?:string
 ) => {
   return useQuery({
-    queryKey: ["getProducts", per_page, page,sort_by, sort_order,search],
-    queryFn: () => getProducts(per_page, page,sort_by, sort_order,search),
+    queryKey: ["getProducts", per_page, page,sort_by, sort_order,q],
+    queryFn: () => getProducts(per_page, page,sort_by, sort_order,q),
     enabled: hasToken(),
     ...queryOptions,
   });
